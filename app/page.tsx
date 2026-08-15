@@ -57,9 +57,29 @@ export default function Home() {
     async function restoreSession() {
       try {
         migrateSessionFromSessionStorage()
+        setIsLoading(true)
+
+        const { data: session } = await authClient.getSession()
+        if (cancelled) return
+
+        const email = session?.user?.email
+        if (email) {
+          const oauthUser = await getOrCreateUserByEmail(email)
+          if (cancelled) return
+          if (oauthUser) {
+            setLastEmail(normalizeEmail(email))
+            setStoredUserId(oauthUser.id)
+            setUserId(oauthUser.id)
+            setIsLoggedIn(true)
+            return
+          }
+          // TechPass is signed in but we could not map the account — do not
+          // fall back to a different leftover local user id.
+          return
+        }
+
         const storedUserId = getStoredUserId()
         if (storedUserId) {
-          setIsLoading(true)
           const user = await getUserById(storedUserId)
           if (cancelled) return
 
@@ -70,20 +90,6 @@ export default function Home() {
           }
           clearAuthSession()
         }
-
-        const { data: session } = await authClient.getSession()
-        const email = session?.user?.email
-        if (!email) return
-
-        setIsLoading(true)
-        const oauthUser = await getOrCreateUserByEmail(email)
-        if (cancelled) return
-        if (!oauthUser) return
-
-        setLastEmail(normalizeEmail(email))
-        setStoredUserId(oauthUser.id)
-        setUserId(oauthUser.id)
-        setIsLoggedIn(true)
       } catch (error) {
         console.error('Failed to restore session', error)
         clearAuthSession()
@@ -146,17 +152,24 @@ export default function Home() {
     [applyNavState, syncHistory]
   )
 
-  const handleLogout = () => {
-    void authClient.signOut()
-    clearAuthSession()
-    setUserId(null)
-    setIsLoggedIn(false)
-    historyReadyRef.current = false
-    historyStackRef.current = []
-    historyIndexRef.current = 0
-    const reset = defaultAppNavState()
-    applyNavState(reset)
-    window.history.replaceState(null, '', '/')
+  const handleLogout = async () => {
+    setIsLoading(true)
+    try {
+      await authClient.signOut()
+    } catch (error) {
+      console.error('Failed to sign out of TechPass', error)
+    } finally {
+      clearAuthSession()
+      setUserId(null)
+      setIsLoggedIn(false)
+      historyReadyRef.current = false
+      historyStackRef.current = []
+      historyIndexRef.current = 0
+      const reset = defaultAppNavState()
+      applyNavState(reset)
+      window.history.replaceState(null, '', '/')
+      setIsLoading(false)
+    }
   }
 
   const handleUrgentOnlyChange = (urgent: boolean) => {

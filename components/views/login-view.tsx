@@ -24,8 +24,16 @@ export function LoginView({ onLogin }: LoginViewProps) {
     if (lastEmail) setEmail(lastEmail)
 
     const params = new URLSearchParams(window.location.search)
-    if (params.get('authError') || params.get('error')) {
-      setError('TechPass sign-in was cancelled or failed. Please try again.')
+    const errorCode = params.get('error')
+    const errorDescription = params.get('error_description')
+    if (params.get('authError') || errorCode) {
+      const details = [errorCode, errorDescription].filter(Boolean).join(' — ')
+      setError(
+        details
+          ? `TechPass sign-in failed (${details}). Please try again.`
+          : 'TechPass sign-in was cancelled or failed. Please try again.'
+      )
+      window.history.replaceState(null, '', window.location.pathname)
     }
   }, [])
 
