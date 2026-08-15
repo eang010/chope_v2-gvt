@@ -21,12 +21,11 @@ import {
 import { authClient } from '@/lib/auth-client'
 import {
   clearAuthSession,
-  getStoredUserId,
   migrateSessionFromSessionStorage,
   setLastEmail,
   setStoredUserId,
 } from '@/lib/auth-session'
-import { getOrCreateUserByEmail, getUserById, normalizeEmail } from '@/lib/db'
+import { getOrCreateUserByEmail, normalizeEmail } from '@/lib/db'
 import { isSupabaseConfigured } from '@/lib/supabase/client'
 import { NavItem, type NavigateOptions } from '@/lib/types'
 
@@ -73,23 +72,11 @@ export default function Home() {
             setIsLoggedIn(true)
             return
           }
-          // TechPass is signed in but we could not map the account — do not
-          // fall back to a different leftover local user id.
+          // TechPass is signed in but we could not map the account.
           return
         }
 
-        const storedUserId = getStoredUserId()
-        if (storedUserId) {
-          const user = await getUserById(storedUserId)
-          if (cancelled) return
-
-          if (user) {
-            setUserId(storedUserId)
-            setIsLoggedIn(true)
-            return
-          }
-          clearAuthSession()
-        }
+        clearAuthSession()
       } catch (error) {
         console.error('Failed to restore session', error)
         clearAuthSession()
@@ -129,12 +116,6 @@ export default function Home() {
     },
     []
   )
-
-  const handleLogin = (id: string) => {
-    setStoredUserId(id)
-    setUserId(id)
-    setIsLoggedIn(true)
-  }
 
   const handleNavigate = useCallback(
     (item: NavItem, options?: NavigateOptions) => {
@@ -238,7 +219,7 @@ export default function Home() {
 
   // Show login if not authenticated
   if (!isLoggedIn) {
-    return <LoginView onLogin={handleLogin} />
+    return <LoginView />
   }
 
   return (

@@ -2,27 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import Image from 'next/image'
-import { ArrowRight } from 'lucide-react'
+import { Info, KeyRound } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
-import { getLastEmail, setLastEmail } from '@/lib/auth-session'
-import { getOrCreateUserByEmail, normalizeEmail } from '@/lib/db'
 
-interface LoginViewProps {
-  onLogin: (userId: string) => void
-}
-
-export function LoginView({ onLogin }: LoginViewProps) {
-  const [email, setEmail] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+export function LoginView() {
   const [isTechPassLoading, setIsTechPassLoading] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    const lastEmail = getLastEmail()
-    if (lastEmail) setEmail(lastEmail)
-
     const params = new URLSearchParams(window.location.search)
     const errorCode = params.get('error')
     const errorDescription = params.get('error_description')
@@ -56,46 +44,9 @@ export function LoginView({ onLogin }: LoginViewProps) {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    
-    // Basic email validation
-    if (!email) {
-      setError('Please enter your email')
-      return
-    }
-    
-    if (!email.includes('@') || !email.includes('.')) {
-      setError('Please enter a valid email')
-      return
-    }
-    
-    setIsLoading(true)
-    
-    try {
-      const user = await getOrCreateUserByEmail(email)
-
-      if (!user) {
-        setError('Something went wrong. Please try again.')
-        return
-      }
-
-      setLastEmail(normalizeEmail(email))
-      onLogin(user.id)
-    } catch (err) {
-      console.error('Login error:', err)
-      setError('Something went wrong. Please try again.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   return (
     <div className="min-h-dvh bg-background flex flex-col">
-      {/* Header area with branding */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8">
-        {/* Logo */}
         <Image
           src="/images/chope-logo.png"
           alt="Chope"
@@ -104,79 +55,56 @@ export function LoginView({ onLogin }: LoginViewProps) {
           className="mb-6 h-30 w-60 object-contain"
           priority
         />
-        
-        {/* App name and tagline */}
+
         <p className="text-muted-foreground text-center mt-2 max-w-xs text-balance">
           Give Away Freely, Collect Happily. <br /> Chope your lobang today!
         </p>
       </div>
-      
-      {/* Login form */}
+
       <div className="px-6 pb-safe-area-inset-bottom">
         <div className="bg-card border border-border rounded-2xl p-6 mb-6">
-          <h2 className="text-lg font-semibold text-foreground mb-1">
+          <h2 className="text-lg font-semibold text-foreground mb-4">
             Welcome back, lah!
           </h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            Enter any work email to try the app — new users are set up automatically.
-          </p>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Input
-                type="email"
-                placeholder="yourname@company.com"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value)
-                  setError('')
-                }}
-                className="h-12 rounded-xl text-base"
-                autoComplete="email"
-                autoFocus
-              />
-              {error && (
-                <p className="text-sm text-destructive">{error}</p>
-              )}
-            </div>
-            
-            <Button
-              type="submit"
-              disabled={isLoading || isTechPassLoading}
-              className="w-full h-12 rounded-xl text-base font-semibold"
-            >
-              {isLoading ? (
-                'Entering...'
-              ) : (
-                <>
-                  Let&apos;s Go
-                  <ArrowRight className="size-5 ml-2" />
-                </>
-              )}
-            </Button>
-          </form>
 
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">or</span>
-            </div>
+          <div className="flex items-start gap-3 rounded-xl bg-muted px-4 py-3.5 mb-4">
+            <Info className="size-4 mt-0.5 shrink-0 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Only users with a @gov.sg email are allowed entry via TechPass.
+            </p>
           </div>
+
+          {error && <p className="text-sm text-destructive mb-4">{error}</p>}
 
           <Button
             type="button"
-            variant="outline"
-            disabled={isLoading || isTechPassLoading}
+            disabled={isTechPassLoading}
             onClick={handleTechPass}
             className="w-full h-12 rounded-xl text-base font-semibold"
           >
-            {isTechPassLoading ? 'Redirecting to TechPass...' : 'Sign in with TechPass'}
+            {isTechPassLoading ? (
+              'Redirecting to TechPass...'
+            ) : (
+              <>
+                <KeyRound className="size-5" />
+                Login with TechPass
+              </>
+            )}
           </Button>
+
+          <p className="text-sm text-muted-foreground text-center mt-4">
+            No TechPass account?{' '}
+            <a
+              href="https://go.gov.sg/onboard-techpass"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary font-medium underline underline-offset-2"
+            >
+              Onboard with TechPass
+            </a>
+          </p>
         </div>
-        
-        {/* Footer text */}
+
         <p className="text-xs text-muted-foreground text-center pb-6">
           By continuing, you agree to be a good colleague and share nicely.
         </p>
