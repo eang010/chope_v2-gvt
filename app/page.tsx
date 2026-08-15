@@ -244,6 +244,7 @@ export default function Home() {
             <LobangView
               userId={userId}
               refreshKey={listingsRefreshKey}
+              isActive={activeNav === 'lobang'}
               urgentOnly={urgentOnly}
               onUrgentOnlyChange={handleUrgentOnlyChange}
               focusListingId={focusListingId}

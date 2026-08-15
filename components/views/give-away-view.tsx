@@ -531,7 +531,7 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
         >
           <div>
             <h2 className="font-semibold text-foreground">How many?</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Optional — leave as N/A for unlimited.</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Optional — leave as N/A if no fixed quantity.</p>
           </div>
           <QuantityStepper
             aria-labelledby="quantity-label"

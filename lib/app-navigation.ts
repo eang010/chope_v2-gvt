@@ -11,6 +11,7 @@ export type AppNavState = {
 const CATEGORY_IDS = new Set(categoryOptions.map((option) => option.id))
 
 function parseCategory(value: string | null | undefined): string | null {
+  if (value === 'All') return 'All'
   if (!value || !CATEGORY_IDS.has(value)) return null
   return value
 }
@@ -50,7 +51,7 @@ export function urlForAppNavState(state: AppNavState, pathname = '/'): string {
   if (state.nav !== 'home') params.set('tab', state.nav)
   if (state.urgentOnly) params.set('urgent', '1')
   if (state.focusListingId) params.set('focus', state.focusListingId)
-  if (state.category) params.set('category', state.category)
+  if (state.category && state.category !== 'All') params.set('category', state.category)
   const qs = params.toString()
   return qs ? `${pathname}?${qs}` : pathname
 }

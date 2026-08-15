@@ -391,7 +391,7 @@ export function HomeView({
             <h2 className="font-semibold text-foreground">Hot Lobangs</h2>
           </div>
           <button
-            onClick={() => onNavigate('lobang', { urgentOnly: true })}
+            onClick={() => onNavigate('lobang', { urgentOnly: true, category: 'All' })}
             className="text-sm text-primary font-medium flex items-center gap-1 hover:underline"
           >
             See all
@@ -422,7 +422,7 @@ export function HomeView({
           <CategoryScroller onSelect={(category) => onNavigate('lobang', { category })} />
           <button
             type="button"
-            onClick={() => onNavigate('lobang')}
+            onClick={() => onNavigate('lobang', { category: 'All' })}
             className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
           >
             Browse all Lobangs

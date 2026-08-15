@@ -25,15 +25,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { PageHeader } from '@/components/layout/page-header'
-import { categories } from '@/lib/mock-data'
+import { categoryOptions } from '@/lib/mock-data'
 import { prepareListingImageFile } from '@/lib/prepare-listing-image'
 import {
   buildEndsAtIsoInSingapore,
@@ -897,29 +890,9 @@ function EditListingDrawer({
           </div>
 
           <div className="space-y-2">
-            <label id="edit-qty-label" className="text-sm font-medium text-foreground">
-              Quantity available
+            <label className="text-sm font-medium text-foreground">
+              Title <span className="text-destructive">*</span>
             </label>
-            <QuantityStepper
-              aria-labelledby="edit-qty-label"
-              value={quantity}
-              onChange={setQuantity}
-              min={minQuantity}
-              max={99}
-              allowEmpty
-              disabled={isSaving}
-              className="rounded-xl"
-            />
-            <p className="text-xs text-muted-foreground">N/A means unlimited.</p>
-            {chopedCount > 0 && (
-              <p className="text-xs text-muted-foreground">
-                {chopedCount} already choped — minimum quantity is {chopedCount}.
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Title</label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -937,22 +910,45 @@ function EditListingDrawer({
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Category</label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="h-11 rounded-xl">
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.filter((c) => c !== 'All').map((cat) => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <label className="text-sm font-medium text-foreground">
+              Category <span className="text-destructive">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+              {categoryOptions.map((option) => {
+                const Icon = option.icon
+                const selected = category === option.id
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    disabled={isSaving}
+                    onClick={() => setCategory(option.id)}
+                    className={cn(
+                      'flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition-colors',
+                      selected
+                        ? 'border-primary bg-primary/10 text-foreground'
+                        : 'border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                    )}
+                    aria-pressed={selected}
+                  >
+                    <span
+                      className={cn(
+                        'flex size-10 items-center justify-center rounded-full',
+                        selected ? 'bg-primary text-primary-foreground' : 'bg-card'
+                      )}
+                    >
+                      <Icon className="size-5" />
+                    </span>
+                    <span className="text-xs font-medium leading-tight">{option.label}</span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
           <div className="space-y-2">
             <label htmlFor="edit-collection-instructions" className="text-sm font-medium text-foreground flex items-center gap-2">
               <MapPin className="size-4" />
-              Collection instructions
+              Collection instructions <span className="text-destructive">*</span>
             </label>
             <p className="text-xs text-muted-foreground">
               Where and how to collect (time, contact, etc.)
@@ -1021,6 +1017,28 @@ function EditListingDrawer({
                   />
                 </div>
               </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label id="edit-qty-label" className="text-sm font-medium text-foreground">
+              Quantity available
+            </label>
+            <QuantityStepper
+              aria-labelledby="edit-qty-label"
+              value={quantity}
+              onChange={setQuantity}
+              min={minQuantity}
+              max={99}
+              allowEmpty
+              disabled={isSaving}
+              className="rounded-xl"
+            />
+            <p className="text-xs text-muted-foreground">N/A means no fixed quantity.</p>
+            {chopedCount > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {chopedCount} already choped — minimum quantity is {chopedCount}.
+              </p>
             )}
           </div>
         </div>

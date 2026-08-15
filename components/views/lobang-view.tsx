@@ -13,6 +13,7 @@ import type { Listing } from '@/lib/db'
 interface LobangViewProps {
   userId: string
   refreshKey?: number
+  isActive?: boolean
   urgentOnly?: boolean
   onUrgentOnlyChange?: (urgentOnly: boolean) => void
   focusListingId?: string | null
@@ -24,6 +25,7 @@ interface LobangViewProps {
 export function LobangView({
   userId,
   refreshKey = 0,
+  isActive = true,
   urgentOnly = false,
   onUrgentOnlyChange,
   focusListingId,
@@ -34,6 +36,7 @@ export function LobangView({
   const [activeCategory, setActiveCategory] = useState(focusCategory || 'All')
   const [listings, setListings] = useState<Listing[]>([])
   const categoryRefs = useRef(new Map<string, HTMLButtonElement>())
+  const categoryStripRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [highlightedListingId, setHighlightedListingId] = useState<string | null>(null)
   const now = new Date()
@@ -91,10 +94,22 @@ export function LobangView({
   }, [focusCategory, focusListingId])
 
   useEffect(() => {
+    if (!isActive) return
+    const strip = categoryStripRef.current
     const node = categoryRefs.current.get(activeCategory)
-    if (!node) return
-    node.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
-  }, [activeCategory])
+    if (!strip || !node) return
+
+    const timer = window.setTimeout(() => {
+      if (activeCategory === 'All') {
+        strip.scrollTo({ left: 0, behavior: 'smooth' })
+        return
+      }
+      const left = node.offsetLeft - (strip.clientWidth - node.offsetWidth) / 2
+      strip.scrollTo({ left: Math.max(0, left), behavior: 'smooth' })
+    }, 50)
+
+    return () => clearTimeout(timer)
+  }, [activeCategory, focusCategory, isActive])
 
   const handleChopeSuccess = (listingId: string, newQuantityRemaining: number) => {
     setListings((prev) =>
@@ -159,7 +174,10 @@ export function LobangView({
       )}
 
       {/* Category filter */}
-      <div className="flex gap-2 overflow-x-auto px-4 md:px-6 pb-2 scrollbar-hide">
+      <div
+        ref={categoryStripRef}
+        className="flex gap-2 overflow-x-auto px-4 md:px-6 pb-2 scrollbar-hide"
+      >
         <button
           type="button"
           onClick={() => onUrgentOnlyChange?.(!urgentOnly)}
