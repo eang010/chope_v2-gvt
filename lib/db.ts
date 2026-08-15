@@ -75,6 +75,15 @@ export function displayNameFromEmail(email: string): string {
     .join(' ')
 }
 
+/** `emily_ang@stb.gov.sg` → `STB`. Non-gov.sg domains return null. */
+export function agencyFromEmail(email: string): string | null {
+  const domain = normalizeEmail(email).split('@')[1]
+  if (!domain?.endsWith('.gov.sg')) return null
+  const withoutSuffix = domain.slice(0, -'.gov.sg'.length)
+  const label = withoutSuffix.split('.').filter(Boolean).at(-1)
+  return label ? label.toUpperCase() : null
+}
+
 export async function getUserByEmail(email: string): Promise<User | null> {
   const supabase = createClient()
   const normalized = normalizeEmail(email)
@@ -100,7 +109,7 @@ export async function createUserFromEmail(email: string): Promise<User | null> {
       email: normalized,
       name: displayNameFromEmail(normalized),
       avatar_seed,
-      agency: null,
+      agency: agencyFromEmail(normalized),
       office_floor: null,
     })
     .select()
@@ -116,7 +125,14 @@ export async function createUserFromEmail(email: string): Promise<User | null> {
 
 export async function getOrCreateUserByEmail(email: string): Promise<User | null> {
   const existing = await getUserByEmail(email)
-  if (existing) return existing
+  if (existing) {
+    const agency = agencyFromEmail(email)
+    if (agency && existing.agency !== agency) {
+      const updated = await updateUserProfile(existing.id, { agency })
+      return updated ?? existing
+    }
+    return existing
+  }
 
   const created = await createUserFromEmail(email)
   if (created) return created
@@ -612,7 +628,7 @@ export async function replaceListingMedia(
 
 export async function updateUserProfile(
   userId: string,
-  updates: Partial<Pick<User, 'office_floor' | 'avatar_seed'>>
+  updates: Partial<Pick<User, 'office_floor' | 'avatar_seed' | 'agency'>>
 ): Promise<User | null> {
   const supabase = createClient()
 
