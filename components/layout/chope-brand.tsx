@@ -17,13 +17,13 @@ export function ChopeBrand({
         alt="Chope"
         width={hero ? 240 : 180}
         height={hero ? 80 : 48}
-        className={cn('object-contain', hero ? 'h-16 w-auto sm:h-20' : 'h-12 w-auto')}
+        className={cn('object-contain', hero ? 'h-16 w-auto sm:h-20' : 'h-8 w-auto sm:h-12')}
         priority
       />
       <span
         className={cn(
           'rounded-full bg-primary/10 font-semibold uppercase tracking-wide text-primary',
-          hero ? 'px-2.5 py-0.5 text-[11px]' : 'px-2 py-0.5 text-[11px]'
+          hero ? 'px-2.5 py-0.5 text-[11px]' : 'px-1.5 py-0.5 text-[9px] sm:px-2 sm:text-[11px]'
         )}
       >
         Beta

@@ -145,9 +145,9 @@ export function LobangView({
       <PageHeader
         icon={
           urgentOnly ? (
-            <Flame className="size-6 text-destructive shrink-0" />
+            <Flame className="size-5 text-destructive shrink-0 sm:size-6" />
           ) : (
-            <Compass className="size-6 text-primary shrink-0" />
+            <Compass className="size-5 text-primary shrink-0 sm:size-6" />
           )
         }
         title={urgentOnly ? 'Hot Lobangs' : 'Lobang'}

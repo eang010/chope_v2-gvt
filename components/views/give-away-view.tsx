@@ -291,7 +291,7 @@ export function GiveAwayView({ userId, isActive = true, onNavigate, onListingCre
   return (
     <div className="mx-auto max-w-2xl space-y-5 pt-4 pb-8">
       <PageHeader
-        icon={<Gift className="size-6 text-primary shrink-0" />}
+        icon={<Gift className="size-5 text-primary shrink-0 sm:size-6" />}
         title="Got something to share?"
         description="Snap it, tap a category, and list it — let the office chope it up."
       />

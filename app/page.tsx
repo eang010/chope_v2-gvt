@@ -236,7 +236,6 @@ export default function Home() {
               userId={userId}
               refreshKey={listingsRefreshKey}
               onNavigate={(nav, options) => handleNavigate(nav as NavItem, options)}
-              onLogout={handleLogout}
               onChopeActivity={() => setListingsRefreshKey((k) => k + 1)}
             />
           </TabPanel>
@@ -266,6 +265,7 @@ export default function Home() {
               userId={userId}
               refreshKey={listingsRefreshKey}
               onListingActivity={() => setListingsRefreshKey((k) => k + 1)}
+              onLogout={handleLogout}
             />
           </TabPanel>
         </>

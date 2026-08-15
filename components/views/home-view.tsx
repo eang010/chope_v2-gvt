@@ -1,22 +1,13 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ChopeBrand } from '@/components/layout/chope-brand'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from '@/components/ui/drawer'
 import { ChopeSheet } from '@/components/feed/chope-sheet'
 import { MediaCarousel } from '@/components/feed/media-carousel'
 import { CountdownTimer } from '@/components/feed/countdown-timer'
-import { Gift, Package, ArrowRight, Clock, MapPin, Mail, Building2, Layers, LogOut } from 'lucide-react'
+import { Gift, Package, ArrowRight, Clock, MapPin } from 'lucide-react'
 import { getAllListings, getUserById, getGivenCount, getChopedCount } from '@/lib/db'
 import { buildHotLobangsList } from '@/lib/hot-lobangs'
 import { categoryOptions } from '@/lib/mock-data'
@@ -104,7 +95,6 @@ interface HomeViewProps {
   userId: string
   refreshKey?: number
   onNavigate: (nav: 'lobang' | 'give-away' | 'my-stuff', options?: NavigateOptions) => void
-  onLogout: () => void
   onChopeActivity?: () => void
 }
 
@@ -173,7 +163,6 @@ export function HomeView({
   userId,
   refreshKey = 0,
   onNavigate,
-  onLogout,
   onChopeActivity,
 }: HomeViewProps) {
   const [user, setUser] = useState<User | null>(null)
@@ -181,7 +170,6 @@ export function HomeView({
   const [givenCount, setGivenCount] = useState(0)
   const [chopedCount, setChopedCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
-  const [showProfileDrawer, setShowProfileDrawer] = useState(false)
 
   useEffect(() => {
     async function loadData() {
@@ -221,28 +209,14 @@ export function HomeView({
     <div className="space-y-6 pt-4">
       {/* Header with greeting */}
       <header className="px-4 md:px-6">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-          <div className="min-w-0">
+        <div className="flex items-end justify-between gap-3">
+          <div className="min-w-0 flex-1">
             <p className="text-muted-foreground text-sm">Hello,</p>
-            <h1 className="text-2xl font-bold text-foreground truncate">{user?.name || 'Loading...'}</h1>
+            <h1 className="text-xl font-bold leading-tight text-foreground break-words sm:text-2xl">
+              {user?.name || 'Loading...'}
+            </h1>
           </div>
-          <ChopeBrand />
-          <button
-            className="justify-self-end"
-            onClick={() => {
-              setShowProfileDrawer(true)
-              getUserById(userId).then((userData) => {
-                if (userData) setUser(userData)
-              })
-            }}
-          >
-            <Avatar className="size-12 border-2 border-primary">
-              <AvatarImage src={user?.avatar_seed ? `https://api.dicebear.com/9.x/thumbs/svg?seed=${user.avatar_seed}` : ''} alt={user?.name || ''} />
-              <AvatarFallback className="bg-secondary text-secondary-foreground">
-                {user?.name?.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-          </button>
+          <ChopeBrand className="shrink-0" />
         </div>
       </header>
 
@@ -346,87 +320,6 @@ export function HomeView({
           </button>
         </div>
       </section>
-
-      {/* Profile Drawer */}
-      <Drawer open={showProfileDrawer} onOpenChange={setShowProfileDrawer}>
-        <DrawerContent className="bg-card">
-          <DrawerHeader className="text-center pb-2">
-            <div className="flex flex-col items-center gap-3">
-              <Avatar className="size-20 border-4 border-primary">
-                <AvatarImage 
-                  src={user?.avatar_seed ? `https://api.dicebear.com/9.x/thumbs/svg?seed=${user.avatar_seed}` : ''} 
-                  alt={user?.name || ''} 
-                />
-                <AvatarFallback className="bg-secondary text-secondary-foreground text-2xl">
-                  {user?.name?.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <DrawerTitle className="text-xl">{user?.name}</DrawerTitle>
-            </div>
-          </DrawerHeader>
-          <div className="px-4 pb-4 space-y-3">
-            {user?.email && (
-              <div className="flex items-center gap-3 p-3 bg-muted rounded-xl">
-                <div className="size-10 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Mail className="size-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground">Email</p>
-                  <p className="text-sm font-medium text-foreground">{user.email}</p>
-                </div>
-              </div>
-            )}
-            {user?.agency && (
-              <div className="flex items-center gap-3 p-3 bg-muted rounded-xl">
-                <div className="size-10 rounded-full bg-secondary flex items-center justify-center">
-                  <Building2 className="size-5 text-secondary-foreground" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground">Agency</p>
-                  <p className="text-sm font-medium text-foreground">{user.agency}</p>
-                </div>
-              </div>
-            )}
-            <div className="flex items-center gap-3 p-3 bg-muted rounded-xl">
-              <div className="size-10 rounded-full bg-success/20 flex items-center justify-center">
-                <Layers className="size-5 text-success" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground">Office Floor</p>
-                {user?.office_floor ? (
-                  <p className="text-sm font-medium text-foreground">{user.office_floor}</p>
-                ) : (
-                  <p className="text-sm text-muted-foreground">-</p>
-                )}
-              </div>
-            </div>
-          </div>
-          <DrawerFooter>
-            <Button 
-              onClick={() => {
-                setShowProfileDrawer(false)
-                onNavigate('my-stuff')
-              }}
-              className="w-full h-11 rounded-xl"
-            >
-              View My Profile
-            </Button>
-            <Button
-              onClick={onLogout}
-              variant="destructive"
-              className="w-full h-11 rounded-xl"
-            >
-              <LogOut className="size-4 mr-2" />
-              Logout
-            </Button>
-            <DrawerClose asChild>
-              <Button variant="ghost" className="w-full h-11 rounded-xl">
-                Close
-              </Button>
-            </DrawerClose>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
     </div>
   )
 }

@@ -35,7 +35,7 @@ import {
 } from '@/lib/singapore-time'
 import { cn } from '@/lib/utils'
 import {
-  User, Gift, Package, Settings, MapPin, Clock, X,
+  User, Gift, Package, Settings, LogOut, MapPin, Clock, X,
   ChevronDown, Edit3, Archive, ArchiveRestore, CircleEllipsis, Trash2, MoreHorizontal, Check, Users, Mail, Building2, Layers, ImagePlus
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
@@ -1117,7 +1117,7 @@ function ProfileEditDrawer({
         </DrawerHeader>
         <div className="px-4 pb-4 space-y-3 overflow-y-auto">
           {/* Email - read only */}
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-muted">
+          <div className="flex cursor-not-allowed items-center gap-3 rounded-xl bg-muted p-3">
             <div className="size-10 rounded-full bg-[#FBE4E4] flex items-center justify-center">
               <Mail className="size-5 text-[#D66B6B]" />
             </div>
@@ -1128,7 +1128,7 @@ function ProfileEditDrawer({
           </div>
 
           {/* Agency - read only */}
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-muted">
+          <div className="flex cursor-not-allowed items-center gap-3 rounded-xl bg-muted p-3">
             <div className="size-10 rounded-full bg-[#FFEFDE] flex items-center justify-center">
               <Building2 className="size-5 text-[#C47D52]" />
             </div>
@@ -1139,7 +1139,7 @@ function ProfileEditDrawer({
           </div>
 
           {/* Office Floor - optional free text */}
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-muted">
+          <label className="flex items-center gap-3 p-3 rounded-xl bg-muted cursor-text">
             <div className="size-10 rounded-full bg-[#E1F2F1] flex items-center justify-center">
               <Layers className="size-5 text-[#4D9B93]" />
             </div>
@@ -1152,7 +1152,9 @@ function ProfileEditDrawer({
                 className="h-auto min-h-0 border-0 bg-transparent px-0 py-0 shadow-none focus-visible:ring-0 text-sm font-medium text-foreground placeholder:text-muted-foreground"
               />
             </div>
-          </div>
+            <Edit3 className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+            <span className="sr-only">Editable</span>
+          </label>
 
           {/* Avatar picker */}
           <div className="space-y-3">
@@ -1204,10 +1206,12 @@ export function MyStuffView({
   userId,
   refreshKey = 0,
   onListingActivity,
+  onLogout,
 }: {
   userId: string
   refreshKey?: number
   onListingActivity?: () => void
+  onLogout: () => void
 }) {
   const [user, setUser] = useState<DBUser | null>(null)
   const [chopes, setChopes] = useState<DBChope[]>([])
@@ -1312,7 +1316,7 @@ export function MyStuffView({
   return (
     <div className="space-y-6 pt-4 pb-8">
       <PageHeader
-        icon={<User className="size-6 text-primary shrink-0" />}
+        icon={<User className="size-5 text-primary shrink-0 sm:size-6" />}
         title="My Stuff"
       />
 
@@ -1353,10 +1357,19 @@ export function MyStuffView({
               size="icon"
               className="text-muted-foreground flex-shrink-0"
               onClick={() => setIsProfileEditOpen(true)}
+              aria-label="Edit profile"
             >
               <Settings className="size-5" />
             </Button>
           </div>
+          <button
+            type="button"
+            onClick={onLogout}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <LogOut className="size-4" />
+            Log out
+          </button>
 
 
         </div>
