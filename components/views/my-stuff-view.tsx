@@ -1461,6 +1461,7 @@ export function MyStuffView({
         onSave={(updated) => {
           setUser(updated)
           setIsProfileEditOpen(false)
+          onListingActivity?.()
         }}
       />
     </div>

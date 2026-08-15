@@ -148,7 +148,14 @@ export function HomeView({
             <p className="text-muted-foreground text-sm">Hello,</p>
             <h1 className="text-2xl font-bold text-foreground">{user?.name || 'Loading...'}</h1>
           </div>
-          <button onClick={() => setShowProfileDrawer(true)}>
+          <button
+            onClick={() => {
+              setShowProfileDrawer(true)
+              getUserById(userId).then((userData) => {
+                if (userData) setUser(userData)
+              })
+            }}
+          >
             <Avatar className="size-12 border-2 border-primary">
               <AvatarImage src={user?.avatar_seed ? `https://api.dicebear.com/9.x/thumbs/svg?seed=${user.avatar_seed}` : ''} alt={user?.name || ''} />
               <AvatarFallback className="bg-secondary text-secondary-foreground">

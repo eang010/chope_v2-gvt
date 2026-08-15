@@ -11,43 +11,8 @@ import { PageHeader } from '@/components/layout/page-header'
 import { MediaCarousel } from '@/components/feed/media-carousel'
 import { Gift, ImagePlus, X, MapPin, Clock, Check } from 'lucide-react'
 import { createListing, uploadListingImage } from '@/lib/db'
+import { prepareListingImageFile } from '@/lib/prepare-listing-image'
 import { buildEndsAtIsoInSingapore, todayInSingapore } from '@/lib/singapore-time'
-
-function useUnlockOnLeave(
-  ref: React.RefObject<HTMLElement | null>,
-  canUnlock: boolean,
-  unlocked: boolean,
-  setUnlocked: (value: boolean) => void,
-) {
-  useEffect(() => {
-    if (!canUnlock) {
-      if (unlocked) setUnlocked(false)
-      return
-    }
-    if (unlocked) return
-
-    const node = ref.current
-    if (!node) return
-
-    const onPointerDown = (event: PointerEvent) => {
-      if (node.contains(event.target as Node)) return
-      setUnlocked(true)
-    }
-
-    const onFocusOut = (event: FocusEvent) => {
-      const next = event.relatedTarget
-      if (next instanceof Node && node.contains(next)) return
-      setUnlocked(true)
-    }
-
-    document.addEventListener('pointerdown', onPointerDown)
-    node.addEventListener('focusout', onFocusOut)
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown)
-      node.removeEventListener('focusout', onFocusOut)
-    }
-  }, [canUnlock, unlocked, ref, setUnlocked])
-}
 
 interface GiveAwayViewProps {
   userId: string
@@ -71,15 +36,43 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
   const [isDragging, setIsDragging] = useState(false)
   const [previewIndex, setPreviewIndex] = useState(0)
   const [carouselNonce, setCarouselNonce] = useState(0)
-  const [quantityUnlocked, setQuantityUnlocked] = useState(false)
   const [collectUnlocked, setCollectUnlocked] = useState(false)
+  const [isPreparingPhotos, setIsPreparingPhotos] = useState(false)
+  const imagesRef = useRef(images)
+  imagesRef.current = images
 
-  const addImageFiles = (fileList: FileList | File[]) => {
-    const incoming = Array.from(fileList).filter((file) => file.type.startsWith('image/'))
-    const newFiles = incoming.slice(0, 5 - images.length)
+  const addImageFiles = async (fileList: FileList | File[]) => {
+    const incoming = Array.from(fileList).filter(
+      (file) =>
+        file.type.startsWith('image/') ||
+        !file.type ||
+        /\.(heic|heif|jpe?g|png|webp|gif)$/i.test(file.name)
+    )
+    const newFiles = incoming.slice(0, 5 - imagesRef.current.length)
     if (newFiles.length === 0) return
-    setImages((prev) => [...prev, ...newFiles])
-    setImagePreviews((prev) => [...prev, ...newFiles.map((file) => URL.createObjectURL(file))])
+
+    setIsPreparingPhotos(true)
+    try {
+      const prepared: File[] = []
+      for (const file of newFiles) {
+        try {
+          prepared.push(await prepareListingImageFile(file))
+        } catch (error) {
+          console.error('Failed to prepare photo:', error)
+        }
+      }
+      if (prepared.length === 0) {
+        alert('Could not use those photos. Try another image or take a new photo.')
+        return
+      }
+      setImages((prev) => [...prev, ...prepared])
+      setImagePreviews((prev) => [
+        ...prev,
+        ...prepared.map((file) => URL.createObjectURL(file)),
+      ])
+    } finally {
+      setIsPreparingPhotos(false)
+    }
   }
 
   const handleSubmit = async () => {
@@ -102,8 +95,12 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
         }
       }
 
-      if (uploadedUrls.length === 0) {
-        alert('Failed to upload images')
+      if (uploadedUrls.length !== images.length) {
+        alert(
+          uploadedUrls.length === 0
+            ? 'Failed to upload images'
+            : 'Some photos failed to upload. Please try again.'
+        )
         setIsSubmitting(false)
         return
       }
@@ -190,7 +187,7 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
 
   const showWhat = images.length > 0
   const whatReady = Boolean(category && title.trim())
-  const showQuantity = showWhat && whatReady && quantityUnlocked
+  const showQuantity = showWhat && whatReady
   const showCollect = showQuantity && collectUnlocked && quantity >= 1
   const showSubmit = showCollect && Boolean(location.trim())
   const isValid = showSubmit
@@ -200,8 +197,6 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
   const collectRef = useRef<HTMLElement>(null)
   const submitRef = useRef<HTMLDivElement>(null)
   const revealedRef = useRef({ what: false, quantity: false, collect: false, submit: false })
-
-  useUnlockOnLeave(whatRef, showWhat && whatReady, quantityUnlocked, setQuantityUnlocked)
 
   useEffect(() => {
     if (!showQuantity) {
@@ -369,6 +364,9 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
                 {images.length < 5 && (
                   <label className="size-16 shrink-0 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer">
                     <ImagePlus className="size-5" />
+                    {isPreparingPhotos ? (
+                      <span className="text-[10px] mt-0.5">…</span>
+                    ) : null}
                     {fileInput}
                   </label>
                 )}
@@ -553,7 +551,7 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
         <div ref={submitRef} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
         <Button
           onClick={handleSubmit}
-          disabled={!isValid || isSubmitting}
+          disabled={!isValid || isSubmitting || isPreparingPhotos}
           className={cn(
             'w-full h-12 text-base font-semibold rounded-xl',
             'bg-primary hover:bg-primary/90 text-primary-foreground'

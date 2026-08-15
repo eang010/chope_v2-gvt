@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,10 +11,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import { getUserById } from '@/lib/db'
 import { cn } from '@/lib/utils'
 import { Mail, Building2, Layers } from 'lucide-react'
 
 interface GiverBadgeProps {
+  userId?: string
   name: string
   avatar?: string
   avatarSeed?: string
@@ -25,6 +27,7 @@ interface GiverBadgeProps {
 }
 
 export function GiverBadge({
+  userId,
   name,
   avatar,
   avatarSeed,
@@ -34,6 +37,29 @@ export function GiverBadge({
   className,
 }: GiverBadgeProps) {
   const [showProfile, setShowProfile] = useState(false)
+  const [liveOfficeFloor, setLiveOfficeFloor] = useState(officeFloor)
+  const [liveAgency, setLiveAgency] = useState(agency)
+  const [liveAvatarSeed, setLiveAvatarSeed] = useState(avatarSeed)
+
+  useEffect(() => {
+    setLiveOfficeFloor(officeFloor)
+    setLiveAgency(agency)
+    setLiveAvatarSeed(avatarSeed)
+  }, [officeFloor, agency, avatarSeed])
+
+  useEffect(() => {
+    if (!showProfile || !userId) return
+    let cancelled = false
+    getUserById(userId).then((user) => {
+      if (cancelled || !user) return
+      setLiveOfficeFloor(user.office_floor || undefined)
+      setLiveAgency(user.agency || undefined)
+      setLiveAvatarSeed(user.avatar_seed || undefined)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [showProfile, userId])
 
   const initials = name
     .split(' ')
@@ -43,7 +69,7 @@ export function GiverBadge({
     .slice(0, 2)
 
   const avatarUrl =
-    avatar || (avatarSeed ? `https://api.dicebear.com/9.x/thumbs/svg?seed=${avatarSeed}` : '')
+    avatar || (liveAvatarSeed ? `https://api.dicebear.com/9.x/thumbs/svg?seed=${liveAvatarSeed}` : '')
 
   return (
     <>
@@ -92,14 +118,14 @@ export function GiverBadge({
                 </div>
               </div>
             )}
-            {agency && (
+            {liveAgency && (
               <div className="flex items-center gap-3 p-3 bg-muted rounded-xl">
                 <div className="size-10 rounded-full bg-secondary flex items-center justify-center">
                   <Building2 className="size-5 text-secondary-foreground" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-muted-foreground">Agency</p>
-                  <p className="text-sm font-medium text-foreground">{agency}</p>
+                  <p className="text-sm font-medium text-foreground">{liveAgency}</p>
                 </div>
               </div>
             )}
@@ -109,8 +135,8 @@ export function GiverBadge({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-muted-foreground">Office Floor</p>
-                {officeFloor ? (
-                  <p className="text-sm font-medium text-foreground">{officeFloor}</p>
+                {liveOfficeFloor ? (
+                  <p className="text-sm font-medium text-foreground">{liveOfficeFloor}</p>
                 ) : (
                   <p className="text-sm text-muted-foreground">-</p>
                 )}

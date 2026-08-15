@@ -155,7 +155,10 @@ export async function getUserById(id: string): Promise<User | null> {
 // Image Upload Functions
 function listingImageUploadName(file: File): { filename: string; contentType: string } {
   const timestamp = Date.now()
-  const random = Math.random().toString(36).substring(2, 8)
+  const random =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : Math.random().toString(36).substring(2, 10)
   const contentType = file.type || 'image/jpeg'
   const ext =
     contentType === 'image/png'
@@ -255,6 +258,7 @@ export async function getAllListings(): Promise<Listing[]> {
     `)
     .eq('is_archived', false)
     .order('created_at', { ascending: false })
+    .order('display_order', { referencedTable: 'listing_media', ascending: true })
 
   if (error) {
     console.error('Error fetching listings:', error)
@@ -274,6 +278,7 @@ export async function getListingById(id: string): Promise<Listing | null> {
       media:listing_media(id, listing_id, type, url, display_order)
     `)
     .eq('id', id)
+    .order('display_order', { referencedTable: 'listing_media', ascending: true })
     .single()
 
   if (error || !data) return null
@@ -295,6 +300,7 @@ export async function getChopesByUserId(userId: string): Promise<Chope[]> {
     `)
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
+    .order('display_order', { referencedTable: 'listing_media', ascending: true })
 
   if (error) {
     console.error('Error fetching chopes:', error)
@@ -371,6 +377,7 @@ export async function getListingsByUserId(userId: string): Promise<Listing[]> {
     `)
     .eq('giver_id', userId)
     .order('created_at', { ascending: false })
+    .order('display_order', { referencedTable: 'listing_media', ascending: true })
 
   if (error) {
     console.error('Error fetching user listings:', error)
@@ -412,6 +419,12 @@ export async function createListing(
 
     if (mediaError) {
       console.error('Error creating listing media:', mediaError)
+      for (const row of mediaWithListingId) {
+        const { error: rowError } = await supabase.from('listing_media').insert(row)
+        if (rowError) {
+          console.error('Error creating listing media row:', rowError)
+        }
+      }
     }
   }
 

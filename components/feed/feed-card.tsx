@@ -42,7 +42,8 @@ export function FeedCard({ listing, userId, onChopeSuccess, highlighted }: FeedC
         {/* Giver badge - top left */}
         <div className="absolute top-3 left-3">
           {giver && (
-            <GiverBadge 
+            <GiverBadge
+              userId={giver.id}
               name={giver.name} 
               avatar={'avatar' in giver ? giver.avatar : undefined}
               avatarSeed={'avatar_seed' in giver ? giver.avatar_seed : undefined}
