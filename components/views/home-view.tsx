@@ -30,16 +30,9 @@ function CategoryScroller({
   onSelect: (category: string) => void
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null)
-  const tileRefs = useRef(new Map<string, HTMLButtonElement>())
-  const measureRef = useRef<HTMLDivElement>(null)
   const [canScroll, setCanScroll] = useState(false)
   const [progress, setProgress] = useState(0)
   const [thumbRatio, setThumbRatio] = useState(1)
-  const [spotlightId, setSpotlightId] = useState<string | null>(categoryOptions[0]?.id ?? null)
-  const [hoverCapable, setHoverCapable] = useState(true)
-  const [hoveredId, setHoveredId] = useState<string | null>(null)
-  const [titleHeight, setTitleHeight] = useState(0)
-  const [descriptionHeight, setDescriptionHeight] = useState(0)
 
   const updateOverflow = () => {
     const el = scrollerRef.current
@@ -48,43 +41,7 @@ function CategoryScroller({
     setCanScroll(maxScroll > 8)
     setProgress(maxScroll > 0 ? el.scrollLeft / maxScroll : 0)
     setThumbRatio(el.scrollWidth > 0 ? el.clientWidth / el.scrollWidth : 1)
-
-    let nextSpotlight = categoryOptions[0]?.id ?? null
-    let closest = Number.POSITIVE_INFINITY
-    for (const [id, node] of tileRefs.current) {
-      const distance = Math.abs(node.offsetLeft - el.scrollLeft)
-      if (distance < closest) {
-        closest = distance
-        nextSpotlight = id
-      }
-    }
-    setSpotlightId(nextSpotlight)
   }
-
-  useEffect(() => {
-    const media = window.matchMedia('(hover: hover) and (pointer: fine)')
-    const syncHover = () => setHoverCapable(media.matches)
-    syncHover()
-    media.addEventListener('change', syncHover)
-    return () => media.removeEventListener('change', syncHover)
-  }, [])
-
-  useEffect(() => {
-    const root = measureRef.current
-    if (!root) return
-
-    const measure = () => {
-      const titles = root.querySelectorAll<HTMLElement>('[data-measure="title"]')
-      const descriptions = root.querySelectorAll<HTMLElement>('[data-measure="description"]')
-      setTitleHeight(Math.max(0, ...Array.from(titles, (node) => node.offsetHeight)))
-      setDescriptionHeight(Math.max(0, ...Array.from(descriptions, (node) => node.offsetHeight)))
-    }
-
-    measure()
-    const observer = new ResizeObserver(measure)
-    observer.observe(root)
-    return () => observer.disconnect()
-  }, [])
 
   useEffect(() => {
     const el = scrollerRef.current
@@ -98,71 +55,30 @@ function CategoryScroller({
     }
   }, [])
 
-  const activeId = hoverCapable ? hoveredId : spotlightId
-
   return (
-    <div className="relative mb-3">
-      <div
-        ref={measureRef}
-        className="pointer-events-none invisible absolute w-[5.25rem]"
-        aria-hidden
-      >
-        {categoryOptions.map((option) => (
-          <div key={option.id}>
-            <div data-measure="title" className="text-xs font-medium leading-tight">
-              {option.label}
-            </div>
-            <div data-measure="description" className="text-[10px] leading-tight">
-              {option.description}
-            </div>
-          </div>
-        ))}
-      </div>
+    <div className="mb-3">
       <div
         ref={scrollerRef}
         className="-mx-1 overflow-x-auto snap-x snap-mandatory scrollbar-hide"
       >
-        <div
-          className="flex items-start gap-2 px-1 pb-1"
-          onMouseLeave={() => setHoveredId(null)}
-        >
+        <div className="flex items-stretch gap-2 px-1 pb-1">
           {categoryOptions.map((option) => {
             const Icon = option.icon
-            const expanded = activeId === option.id
             return (
               <button
                 key={option.id}
                 type="button"
-                ref={(node) => {
-                  if (node) tileRefs.current.set(option.id, node)
-                  else tileRefs.current.delete(option.id)
-                }}
                 onClick={() => onSelect(option.id)}
-                onMouseEnter={() => setHoveredId(option.id)}
                 className={cn(
-                  'flex w-[6.75rem] shrink-0 snap-start flex-col items-center rounded-xl border border-border bg-card p-3 text-center transition-colors',
+                  'flex w-[6.75rem] shrink-0 snap-start flex-col items-center gap-1.5 rounded-xl border border-border bg-card p-3 text-center transition-colors',
                   'text-muted-foreground hover:border-primary/50 hover:text-foreground'
                 )}
               >
-                <span className="flex w-full flex-col items-center gap-1.5">
-                  <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <Icon className="size-5" />
-                  </span>
-                  <span
-                    className="flex w-full items-start justify-center text-xs font-medium leading-tight text-foreground"
-                    style={titleHeight ? { minHeight: titleHeight } : undefined}
-                  >
-                    {option.label}
-                  </span>
+                <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Icon className="size-5" />
                 </span>
-                <span
-                  className="w-full overflow-hidden text-[10px] leading-tight text-muted-foreground transition-all duration-200"
-                  style={{
-                    marginTop: expanded ? 6 : 0,
-                    height: expanded ? descriptionHeight : 0,
-                  }}
-                >
-                  {option.description}
+                <span className="min-h-[2.5em] text-xs font-medium leading-tight text-foreground">
+                  {option.label}
                 </span>
               </button>
             )
