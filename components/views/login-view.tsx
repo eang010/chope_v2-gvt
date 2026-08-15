@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import Image from 'next/image'
+import { ChopeBrand } from '@/components/layout/chope-brand'
 import { Info, KeyRound } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
 
@@ -47,14 +47,7 @@ export function LoginView() {
   return (
     <div className="min-h-dvh bg-background flex flex-col">
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8 md:px-8">
-        <Image
-          src="/images/chope-logo.png"
-          alt="Chope"
-          width={80}
-          height={80}
-          className="mb-6 h-30 w-60 object-contain"
-          priority
-        />
+        <ChopeBrand size="hero" className="mb-6" />
 
         <p className="text-muted-foreground text-center mt-2 max-w-xs text-balance">
           Give Away Freely, Collect Happily. <br /> Chope your lobang today!

@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { ChopeBrand } from '@/components/layout/chope-brand'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -143,12 +143,14 @@ export function HomeView({
     <div className="space-y-6 pt-4">
       {/* Header with greeting */}
       <header className="px-4 md:px-6">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <div className="min-w-0">
             <p className="text-muted-foreground text-sm">Hello,</p>
-            <h1 className="text-2xl font-bold text-foreground">{user?.name || 'Loading...'}</h1>
+            <h1 className="text-2xl font-bold text-foreground truncate">{user?.name || 'Loading...'}</h1>
           </div>
+          <ChopeBrand />
           <button
+            className="justify-self-end"
             onClick={() => {
               setShowProfileDrawer(true)
               getUserById(userId).then((userData) => {
@@ -264,13 +266,6 @@ export function HomeView({
             <ArrowRight className="size-4 ml-2" />
           </Button>
         </div>
-        <Image
-          src="/images/chope-logo.png"
-          alt="Chope"
-          width={120}
-          height={120}
-          className="mx-auto mt-6 h-24 w-24 object-contain"
-        />
       </section>
 
       {/* Profile Drawer */}
