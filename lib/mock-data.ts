@@ -20,7 +20,7 @@ export const mockListings: Listing[] = [
       { type: 'image', url: 'https://images.unsplash.com/photo-1509722747041-616f39b57569?w=800&h=800&fit=crop' },
       { type: 'image', url: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=800&h=800&fit=crop' },
     ],
-    category: 'Food & Snacks',
+    category: 'Food',
     condition: 'new',
     location: 'Level 12, Pantry',
     endsAt: addHours(now, 2),
@@ -41,7 +41,7 @@ export const mockListings: Listing[] = [
     media: [
       { type: 'image', url: 'https://images.unsplash.com/photo-1548365328-8c6db3220e4c?w=800&h=800&fit=crop' },
     ],
-    category: 'Food & Snacks',
+    category: 'Pantry Snacks',
     condition: 'new',
     location: 'Level 8, Reception',
     endsAt: addDays(now, 2),
@@ -83,7 +83,7 @@ export const mockListings: Listing[] = [
     media: [
       { type: 'image', url: 'https://images.unsplash.com/photo-1558857563-b371033873b8?w=800&h=800&fit=crop' },
     ],
-    category: 'Food & Snacks',
+    category: 'Food',
     condition: 'new',
     location: 'Level 10, Lobby',
     endsAt: addHours(now, 1),
@@ -145,7 +145,7 @@ export const mockListings: Listing[] = [
     media: [
       { type: 'image', url: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800&h=800&fit=crop' },
     ],
-    category: 'Food & Snacks',
+    category: 'Pantry Snacks',
     condition: 'new',
     location: 'Level 6, Pantry',
     giver: {
@@ -229,7 +229,7 @@ export const mockMyListings: Listing[] = [
     media: [
       { type: 'image', url: 'https://images.unsplash.com/photo-1621939514649-280e2ee25f60?w=800&h=800&fit=crop' },
     ],
-    category: 'Food & Snacks',
+    category: 'Pantry Snacks',
     condition: 'new',
     location: 'Level 7, Pantry',
     giver: mockUser,
@@ -281,7 +281,7 @@ export const mockArchivedListings: Listing[] = [
     media: [
       { type: 'image', url: 'https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=800&h=800&fit=crop' },
     ],
-    category: 'Food & Snacks',
+    category: 'Pantry Snacks',
     condition: 'new',
     location: 'Level 7, Pantry',
     giver: mockUser,
@@ -295,9 +295,19 @@ export const mockArchivedListings: Listing[] = [
 
 export const categories = [
   'All',
-  'Food & Snacks',
+  'Food',
+  'Pantry Snacks',
   'Office Essentials',
   'Open Jio',
   'SOS',
   'Others',
 ]
+
+export function listingMatchesCategory(listingCategory: string, activeCategory: string) {
+  if (activeCategory === 'All') return true
+  if (listingCategory === activeCategory) return true
+  return (
+    listingCategory === 'Food & Snacks' &&
+    (activeCategory === 'Food' || activeCategory === 'Pantry Snacks')
+  )
+}

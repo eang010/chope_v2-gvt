@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { categories } from '@/lib/mock-data'
+import { categories, listingMatchesCategory } from '@/lib/mock-data'
 import { FeedCard } from '@/components/feed/feed-card'
 import { PageHeader } from '@/components/layout/page-header'
 import { cn } from '@/lib/utils'
@@ -103,9 +103,9 @@ export function LobangView({
     })
   }
   
-  const filteredListings = activeCategory === 'All'
-    ? browseListings
-    : browseListings.filter((l) => l.category === activeCategory)
+  const filteredListings = browseListings.filter((l) =>
+    listingMatchesCategory(l.category, activeCategory)
+  )
 
   return (
     <div className="space-y-4 pt-4">

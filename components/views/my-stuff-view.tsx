@@ -1118,7 +1118,7 @@ function ProfileEditDrawer({
               <Input
                 value={officeFloor}
                 onChange={(e) => setOfficeFloor(e.target.value)}
-                placeholder="e.g. Level 7, Pantry"
+                placeholder="e.g. Level 7, Level 9"
                 className="h-auto min-h-0 border-0 bg-transparent px-0 py-0 shadow-none focus-visible:ring-0 text-sm font-medium text-foreground placeholder:text-muted-foreground"
               />
             </div>
