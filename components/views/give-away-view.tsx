@@ -1,23 +1,52 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { QuantityStepper } from '@/components/ui/quantity-stepper'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { categories } from '@/lib/mock-data'
+import { categoryOptions } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/layout/page-header'
 import { Gift, ImagePlus, X, MapPin, Clock, Check } from 'lucide-react'
 import { createListing, uploadListingImage } from '@/lib/db'
 import { buildEndsAtIsoInSingapore, todayInSingapore } from '@/lib/singapore-time'
+
+function useUnlockOnLeave(
+  ref: React.RefObject<HTMLElement | null>,
+  canUnlock: boolean,
+  unlocked: boolean,
+  setUnlocked: (value: boolean) => void,
+) {
+  useEffect(() => {
+    if (!canUnlock) {
+      if (unlocked) setUnlocked(false)
+      return
+    }
+    if (unlocked) return
+
+    const node = ref.current
+    if (!node) return
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (node.contains(event.target as Node)) return
+      setUnlocked(true)
+    }
+
+    const onFocusOut = (event: FocusEvent) => {
+      const next = event.relatedTarget
+      if (next instanceof Node && node.contains(next)) return
+      setUnlocked(true)
+    }
+
+    document.addEventListener('pointerdown', onPointerDown)
+    node.addEventListener('focusout', onFocusOut)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      node.removeEventListener('focusout', onFocusOut)
+    }
+  }, [canUnlock, unlocked, ref, setUnlocked])
+}
 
 interface GiveAwayViewProps {
   userId: string
@@ -38,6 +67,17 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
   const [endTime, setEndTime] = useState('')
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [quantityUnlocked, setQuantityUnlocked] = useState(false)
+  const [collectUnlocked, setCollectUnlocked] = useState(false)
+
+  const addImageFiles = (fileList: FileList | File[]) => {
+    const incoming = Array.from(fileList).filter((file) => file.type.startsWith('image/'))
+    const newFiles = incoming.slice(0, 5 - images.length)
+    if (newFiles.length === 0) return
+    setImages((prev) => [...prev, ...newFiles])
+    setImagePreviews((prev) => [...prev, ...newFiles.map((file) => URL.createObjectURL(file))])
+  }
 
   const handleSubmit = async () => {
     const trimmedLocation = location.trim()
@@ -51,7 +91,6 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
     try {
       const endsAt = buildEndsAtIsoInSingapore(hasEndDate, endDate, endTime)
 
-      // Upload images to Supabase Storage
       const uploadedUrls: string[] = []
       for (const file of images) {
         const url = await uploadListingImage(file)
@@ -105,16 +144,7 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (files) {
-      const newFiles = Array.from(files).slice(0, 5 - images.length)
-      setImages([...images, ...newFiles])
-      
-      // Create previews for display
-      const newPreviews = newFiles.map(file => URL.createObjectURL(file))
-      setImagePreviews([...imagePreviews, ...newPreviews])
-    }
-    // Reset input
+    if (e.target.files) addImageFiles(e.target.files)
     e.target.value = ''
   }
 
@@ -126,8 +156,56 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
     setImagePreviews(newPreviews)
   }
 
-  const isValid =
-    title && category && location.trim() && images.length > 0 && quantity >= 1
+  const showWhat = images.length > 0
+  const whatReady = Boolean(category && title.trim())
+  const showQuantity = showWhat && whatReady && quantityUnlocked
+  const showCollect = showQuantity && collectUnlocked && quantity >= 1
+  const showSubmit = showCollect && Boolean(location.trim())
+  const isValid = showSubmit
+
+  const whatRef = useRef<HTMLElement>(null)
+  const quantityRef = useRef<HTMLElement>(null)
+  const collectRef = useRef<HTMLElement>(null)
+  const submitRef = useRef<HTMLDivElement>(null)
+  const revealedRef = useRef({ what: false, quantity: false, collect: false, submit: false })
+
+  useUnlockOnLeave(whatRef, showWhat && whatReady, quantityUnlocked, setQuantityUnlocked)
+
+  useEffect(() => {
+    if (!showQuantity) {
+      setCollectUnlocked(false)
+      return
+    }
+    const timer = window.setTimeout(() => setCollectUnlocked(true), 400)
+    return () => window.clearTimeout(timer)
+  }, [showQuantity])
+
+  useEffect(() => {
+    const revealed = revealedRef.current
+    const scrollTo = (el: HTMLElement | null) => {
+      el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+    if (showWhat && !revealed.what) {
+      revealed.what = true
+      scrollTo(whatRef.current)
+    }
+    if (showQuantity && !revealed.quantity) {
+      revealed.quantity = true
+      scrollTo(quantityRef.current)
+    }
+    if (showCollect && !revealed.collect) {
+      revealed.collect = true
+      scrollTo(collectRef.current)
+    }
+    if (showSubmit && !revealed.submit) {
+      revealed.submit = true
+      scrollTo(submitRef.current)
+    }
+    if (!showWhat) revealed.what = false
+    if (!showQuantity) revealed.quantity = false
+    if (!showCollect) revealed.collect = false
+    if (!showSubmit) revealed.submit = false
+  }, [showWhat, showQuantity, showCollect, showSubmit])
 
   if (isSubmitted) {
     return (
@@ -146,115 +224,187 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
     )
   }
 
+  const fileInput = (
+    <input
+      type="file"
+      multiple
+      accept="image/*"
+      onChange={handleImageUpload}
+      className="hidden"
+    />
+  )
+
   return (
-    <div className="mx-auto max-w-2xl space-y-6 pt-4 pb-8">
+    <div className="mx-auto max-w-2xl space-y-5 pt-4 pb-8">
       <PageHeader
         icon={<Gift className="size-6 text-primary shrink-0" />}
-        title="List Away"
-        description="Share anything and everything with the community"
+        title="Got something to share?"
+        description="Snap it, tap a category, and list it — the office will chope it up."
       />
 
-      <div className="px-4 md:px-6 space-y-6">
-        {/* Image upload */}
+      <div className="px-4 md:px-6 space-y-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">
-            Photos <span className="text-destructive">*</span>
-          </label>
-          <p className="text-xs text-muted-foreground">
-            Add up to 5 photos. First photo will be the cover.
-          </p>
-          <div className="flex gap-2 flex-wrap">
-            {images.map((img, index) => (
-              <div key={index} className="relative size-20 rounded-lg overflow-hidden bg-muted">
-                <img src={imagePreviews[index]} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
-                <button
-                  onClick={() => removeImage(index)}
-                  className="absolute top-1 right-1 size-5 rounded-full bg-card/90 flex items-center justify-center"
-                >
-                  <X className="size-3" />
-                </button>
-                {index === 0 && (
-                  <span className="absolute bottom-0 left-0 right-0 bg-primary/90 text-primary-foreground text-[10px] text-center py-0.5">
-                    Cover
-                  </span>
-                )}
+        <label
+          className={cn(
+            'block cursor-pointer rounded-2xl border-2 border-dashed transition-colors overflow-hidden',
+            isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/60',
+            images.length === 0 && 'bg-muted/40'
+          )}
+          onDragOver={(e) => {
+            e.preventDefault()
+            setIsDragging(true)
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault()
+            setIsDragging(false)
+            if (e.dataTransfer.files.length) addImageFiles(e.dataTransfer.files)
+          }}
+        >
+          {images.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-2 px-6 py-14 text-center">
+              <div className="size-14 rounded-full bg-primary/10 flex items-center justify-center">
+                <ImagePlus className="size-7 text-primary" />
               </div>
-            ))}
+              <p className="font-semibold text-foreground">Drop a photo or tap to add</p>
+              <p className="text-sm text-muted-foreground">First one is the cover. Up to 5 photos.</p>
+              {fileInput}
+            </div>
+          ) : (
+            <div className="relative aspect-[16/10] bg-muted">
+              <img
+                src={imagePreviews[0]}
+                alt="Cover"
+                className="h-full w-full object-cover"
+              />
+              <span className="absolute bottom-3 left-3 rounded-full bg-primary px-2.5 py-0.5 text-xs font-medium text-primary-foreground">
+                Cover
+              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  removeImage(0)
+                }}
+                className="absolute top-3 right-3 size-8 rounded-full bg-card/90 flex items-center justify-center shadow-sm"
+                aria-label="Remove cover photo"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+          )}
+        </label>
+
+        {images.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+            {imagePreviews.slice(1).map((preview, i) => {
+              const index = i + 1
+              return (
+                <div key={preview} className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
+                  <img src={preview} alt={`Photo ${index + 1}`} className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute top-1 right-1 size-5 rounded-full bg-card/90 flex items-center justify-center"
+                    aria-label={`Remove photo ${index + 1}`}
+                  >
+                    <X className="size-3" />
+                  </button>
+                </div>
+              )
+            })}
             {images.length < 5 && (
-              <>
-                <label className="size-20 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer">
-                  <ImagePlus className="size-6 mb-1" />
-                  <span className="text-xs">Add</span>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                </label>
-              </>
+              <label className="size-16 shrink-0 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer">
+                <ImagePlus className="size-5" />
+                {fileInput}
+              </label>
             )}
           </div>
+        )}
         </div>
 
-        {/* Category */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">
-            Category <span className="text-destructive">*</span>
-          </label>
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="w-full h-11">
-              <SelectValue placeholder="Select a category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.filter(c => c !== 'All').map((cat) => (
-                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {showWhat && (
+        <section
+          ref={whatRef}
+          className="rounded-2xl border border-border bg-card p-4 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300"
+        >
+          <div>
+            <h2 className="font-semibold text-foreground">What is it?</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Pick a vibe, then name it.</p>
+          </div>
 
-        {/* Title */}
-        <div className="space-y-2">
-          <label htmlFor="title" className="text-sm font-medium text-foreground">
-            Title <span className="text-destructive">*</span>
-          </label>
-          <Input
-            id="title"
-            placeholder="e.g., Desk plant"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            maxLength={100}
-            className="h-11"
-          />
-          <p className="text-xs text-muted-foreground text-right">{title.length}/100</p>
-        </div>
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+            {categoryOptions.map((option) => {
+              const Icon = option.icon
+              const selected = category === option.id
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setCategory(option.id)}
+                  className={cn(
+                    'flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition-colors',
+                    selected
+                      ? 'border-primary bg-primary/10 text-foreground'
+                      : 'border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                  )}
+                  aria-pressed={selected}
+                >
+                  <span
+                    className={cn(
+                      'flex size-10 items-center justify-center rounded-full',
+                      selected ? 'bg-primary text-primary-foreground' : 'bg-card'
+                    )}
+                  >
+                    <Icon className="size-5" />
+                  </span>
+                  <span className="text-xs font-medium leading-tight">{option.label}</span>
+                </button>
+              )
+            })}
+          </div>
 
-        {/* Description */}
-        <div className="space-y-2">
-          <label htmlFor="description" className="text-sm font-medium text-foreground">
-            Description
-          </label>
-          <Textarea
-            id="description"
-            placeholder="My plants are growing too fast, looking for a new home!"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            maxLength={500}
-            className="min-h-[100px]"
-          />
-          <p className="text-xs text-muted-foreground text-right">{description.length}/500</p>
-        </div>
+          <div className="space-y-2">
+            <label htmlFor="title" className="text-sm font-medium text-foreground">
+              Title <span className="text-destructive">*</span>
+            </label>
+            <Input
+              id="title"
+              placeholder="e.g., Desk plant looking for a new home"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={100}
+              className="h-11"
+            />
+            <p className="text-xs text-muted-foreground text-right">{title.length}/100</p>
+          </div>
 
-        {/* Quantity */}
-        <div className="space-y-2">
-          <label id="quantity-label" className="text-sm font-medium text-foreground">
-            Quantity available <span className="text-destructive">*</span>
-          </label>
-          <p className="text-xs text-muted-foreground">
-            How many of this items?
-          </p>
+          <div className="space-y-2">
+            <label htmlFor="description" className="text-sm font-medium text-foreground">
+              Description
+            </label>
+            <Textarea
+              id="description"
+              placeholder="Optional — anything they should know?"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={500}
+              className="min-h-[88px]"
+            />
+            <p className="text-xs text-muted-foreground text-right">{description.length}/500</p>
+          </div>
+        </section>
+        )}
+
+        {showQuantity && (
+        <section
+          ref={quantityRef}
+          className="rounded-2xl border border-border bg-card p-4 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300"
+        >
+          <div>
+            <h2 className="font-semibold text-foreground">How many?</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">How many can people chope?</p>
+          </div>
           <QuantityStepper
             aria-labelledby="quantity-label"
             value={quantity}
@@ -263,31 +413,40 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
             max={99}
             disabled={isSubmitting}
           />
-        </div>
+          <span id="quantity-label" className="sr-only">
+            Quantity available
+          </span>
+        </section>
+        )}
 
-        {/* Collection instructions */}
-        <div className="space-y-2">
-          <label htmlFor="collection-instructions" className="text-sm font-medium text-foreground flex items-center gap-2">
-            <MapPin className="size-4" />
-            Collection instructions <span className="text-destructive">*</span>
-          </label>
-          <p className="text-xs text-muted-foreground">
-            Where and how to collect (time, contact, etc.)
-          </p>
-          <Textarea
-            id="collection-instructions"
-            placeholder="e.g. Level 7 pantry, weekdays after 3pm - ping me on Teams if you're coming by!"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            maxLength={250}
-            className="min-h-[80px]"
-          />
-          <p className="text-xs text-muted-foreground text-right">{location.length}/250</p>
-        </div>
+        {showCollect && (
+        <section
+          ref={collectRef}
+          className="rounded-2xl border border-border bg-card p-4 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300"
+        >
+          <div>
+            <h2 className="font-semibold text-foreground">How to collect?</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Tell them where to find you.</p>
+          </div>
 
-        {/* End date toggle */}
-        <div className="space-y-3">
+          <div className="space-y-2">
+            <label htmlFor="collection-instructions" className="text-sm font-medium text-foreground flex items-center gap-2">
+              <MapPin className="size-4" />
+              Collection instructions <span className="text-destructive">*</span>
+            </label>
+            <Textarea
+              id="collection-instructions"
+              placeholder="e.g. Level 7 pantry, weekdays after 3pm — ping me on Teams!"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              maxLength={250}
+              className="min-h-[80px]"
+            />
+            <p className="text-xs text-muted-foreground text-right">{location.length}/250</p>
+          </div>
+
           <button
+            type="button"
             onClick={() => setHasEndDate(!hasEndDate)}
             className={cn(
               'w-full p-3 rounded-xl border flex items-center gap-3 transition-colors',
@@ -299,10 +458,12 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
               <p className="font-medium text-sm text-foreground">Set end date</p>
               <p className="text-xs text-muted-foreground">Create urgency with a deadline</p>
             </div>
-            <div className={cn(
-              'size-5 rounded-full border-2 flex items-center justify-center',
-              hasEndDate ? 'border-primary bg-primary' : 'border-muted-foreground'
-            )}>
+            <div
+              className={cn(
+                'size-5 rounded-full border-2 flex items-center justify-center',
+                hasEndDate ? 'border-primary bg-primary' : 'border-muted-foreground'
+              )}
+            >
               {hasEndDate && <Check className="size-3 text-primary-foreground" />}
             </div>
           </button>
@@ -331,9 +492,11 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
               </div>
             </div>
           )}
-        </div>
+        </section>
+        )}
 
-        {/* Submit button */}
+        {showSubmit && (
+        <div ref={submitRef} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
         <Button
           onClick={handleSubmit}
           disabled={!isValid || isSubmitting}
@@ -343,8 +506,10 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
           )}
         >
           <Gift className="size-5 mr-2" />
-          {isSubmitting ? 'Creating...' : 'List Item'}
+          {isSubmitting ? 'Creating...' : 'List it, lah!'}
         </Button>
+        </div>
+        )}
       </div>
     </div>
   )

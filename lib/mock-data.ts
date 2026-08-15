@@ -1,3 +1,5 @@
+import type { LucideIcon } from 'lucide-react'
+import { Briefcase, Cookie, Package, Siren, Users, UtensilsCrossed } from 'lucide-react'
 import { Listing, Chope, User } from './types'
 import { addHours, addDays, subDays, subHours } from 'date-fns'
 
@@ -301,6 +303,15 @@ export const categories = [
   'Open Jio',
   'SOS',
   'Others',
+]
+
+export const categoryOptions: { id: string; label: string; icon: LucideIcon }[] = [
+  { id: 'Food', label: 'Food', icon: UtensilsCrossed },
+  { id: 'Pantry Snacks', label: 'Pantry Snacks', icon: Cookie },
+  { id: 'Office Essentials', label: 'Office Essentials', icon: Briefcase },
+  { id: 'Open Jio', label: 'Open Jio', icon: Users },
+  { id: 'SOS', label: 'SOS', icon: Siren },
+  { id: 'Others', label: 'Others', icon: Package },
 ]
 
 export function listingMatchesCategory(listingCategory: string, activeCategory: string) {
