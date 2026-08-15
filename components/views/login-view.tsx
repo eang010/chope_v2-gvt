@@ -46,7 +46,7 @@ export function LoginView() {
 
   return (
     <div className="min-h-dvh bg-background flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8 md:px-8">
         <Image
           src="/images/chope-logo.png"
           alt="Chope"
@@ -61,8 +61,8 @@ export function LoginView() {
         </p>
       </div>
 
-      <div className="px-6 pb-safe-area-inset-bottom">
-        <div className="bg-card border border-border rounded-2xl p-6 mb-6">
+      <div className="mx-auto w-full max-w-md px-6 pb-safe-area-inset-bottom md:px-0 md:pb-10">
+        <div className="bg-card border border-border rounded-2xl p-6 mb-6 md:p-8">
           <h2 className="text-lg font-semibold text-foreground mb-4">
             Welcome back, lah!
           </h2>

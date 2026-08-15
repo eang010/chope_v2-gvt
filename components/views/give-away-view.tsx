@@ -155,14 +155,14 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
   }
 
   return (
-    <div className="space-y-6 pt-4 pb-8">
+    <div className="mx-auto max-w-2xl space-y-6 pt-4 pb-8">
       <PageHeader
         icon={<Gift className="size-6 text-primary shrink-0" />}
         title="List Away"
         description="Share anything and everything with the community"
       />
 
-      <div className="px-4 space-y-6">
+      <div className="px-4 md:px-6 space-y-6">
         {/* Image upload */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">

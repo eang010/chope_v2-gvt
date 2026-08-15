@@ -13,7 +13,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ icon, title, description, className, trailing }: PageHeaderProps) {
   return (
-    <header className={cn('px-4', className)}>
+    <header className={cn('px-4 md:px-6', className)}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           {icon}

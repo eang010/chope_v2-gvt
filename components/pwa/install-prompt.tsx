@@ -102,7 +102,7 @@ export function InstallPrompt() {
       role="region"
       aria-label="Install app"
     >
-      <div className="pointer-events-auto mx-auto max-w-lg rounded-2xl border border-border bg-card p-4 shadow-lg">
+      <div className="pointer-events-auto mx-auto max-w-lg md:max-w-xl rounded-2xl border border-border bg-card p-4 shadow-lg">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
             <Smartphone className="size-5 text-primary" />

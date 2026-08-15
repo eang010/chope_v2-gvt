@@ -38,7 +38,7 @@ export function FeedCard({ listing, userId, onChopeSuccess, highlighted }: FeedC
     <article
       id={`listing-${listing.id}`}
       className={cn(
-        'bg-card border border-border rounded-2xl overflow-hidden shadow-sm transition-shadow',
+        'bg-card border border-border rounded-2xl overflow-hidden shadow-sm transition-shadow h-full',
         highlighted && 'ring-2 ring-primary ring-offset-2 ring-offset-background'
       )}
     >

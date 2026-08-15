@@ -42,7 +42,7 @@ function HotLobangCard({
   onOpenListing: (listingId: string) => void
 }) {
   return (
-    <div className="flex-shrink-0 snap-start w-[calc((min(100vw,32rem)-2rem-0.75rem)/2)] bg-card border border-border rounded-xl overflow-hidden">
+    <div className="flex-shrink-0 snap-start w-[calc((100%-0.75rem)/2)] md:w-[calc((100%-1.5rem)/3)] lg:w-[calc((100%-2.25rem)/4)] bg-card border border-border rounded-xl overflow-hidden">
       <button
         type="button"
         onClick={() => onOpenListing(listing.id)}
@@ -142,7 +142,7 @@ export function HomeView({
   return (
     <div className="space-y-6 pt-4">
       {/* Header with greeting */}
-      <header className="px-4">
+      <header className="px-4 md:px-6">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-muted-foreground text-sm">Hello,</p>
@@ -160,7 +160,7 @@ export function HomeView({
       </header>
 
       {/* Stats cards */}
-      <section className="px-4">
+      <section className="px-4 md:px-6">
         <div className="grid grid-cols-2 gap-3">
           <button 
             onClick={() => onNavigate('my-stuff')}
@@ -194,7 +194,7 @@ export function HomeView({
       </section>
 
       {/* Quick action */}
-      <section className="px-4">
+      <section className="px-4 md:px-6">
         <button
           onClick={() => onNavigate('give-away')}
           className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl p-4 flex items-center justify-between transition-colors"
@@ -214,7 +214,7 @@ export function HomeView({
 
       {/* Hot Lobangs */}
       <section>
-        <div className="px-4 flex items-center justify-between mb-3">
+        <div className="px-4 md:px-6 flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Clock className="size-5 text-destructive" />
             <h2 className="font-semibold text-foreground">Hot Lobangs</h2>
@@ -227,7 +227,7 @@ export function HomeView({
             <ArrowRight className="size-4" />
           </button>
         </div>
-        <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory px-4 pb-2 scrollbar-hide">
+        <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory px-4 md:px-6 pb-2 scrollbar-hide">
           {hotLobangs.map((listing) => (
                 <HotLobangCard
                   key={listing.id}
@@ -243,7 +243,7 @@ export function HomeView({
       </section>
 
       {/* Browse prompt */}
-      <section className="px-4">
+      <section className="px-4 md:px-6">
         <div className="bg-muted rounded-xl p-4 text-center">
           <p className="text-muted-foreground mb-3">
             Looking for something specific?

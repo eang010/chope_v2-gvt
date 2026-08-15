@@ -125,7 +125,7 @@ export function LobangView({
 
       {/* Urgent filter banner */}
       {urgentOnly && onUrgentOnlyChange && (
-        <div className="mx-4 bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-center justify-between">
+        <div className="mx-4 md:mx-6 bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-center justify-between">
           <div className="flex items-center gap-2 text-destructive">
             <Flame className="size-4" />
             <span className="text-sm font-medium">Showing urgent items only</span>
@@ -141,7 +141,7 @@ export function LobangView({
       )}
 
       {/* Category filter */}
-      <div className="flex gap-2 overflow-x-auto px-4 pb-2 scrollbar-hide">
+      <div className="flex gap-2 overflow-x-auto px-4 md:px-6 pb-2 scrollbar-hide">
         <button
           type="button"
           onClick={() => onUrgentOnlyChange?.(!urgentOnly)}
@@ -173,7 +173,7 @@ export function LobangView({
       </div>
 
       {/* Feed */}
-      <div className="px-4 space-y-4">
+      <div className="px-4 md:px-6">
         {filteredListings.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">Nothing here leh...</p>
@@ -182,15 +182,17 @@ export function LobangView({
             </p>
           </div>
         ) : (
-          filteredListings.map((listing) => (
-            <FeedCard
-              key={listing.id}
-              listing={listing}
-              userId={userId}
-              onChopeSuccess={handleChopeSuccess}
-              highlighted={highlightedListingId === listing.id}
-            />
-          ))
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {filteredListings.map((listing) => (
+              <FeedCard
+                key={listing.id}
+                listing={listing}
+                userId={userId}
+                onChopeSuccess={handleChopeSuccess}
+                highlighted={highlightedListingId === listing.id}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>

@@ -1287,7 +1287,7 @@ export function MyStuffView({
       />
 
       {/* Profile card */}
-      <section className="px-4">
+      <section className="px-4 md:px-6">
         <div className="bg-card border border-border rounded-2xl p-4">
           <div className="flex items-center gap-4">
             <Avatar className="size-16 border-2 border-primary">
@@ -1333,7 +1333,7 @@ export function MyStuffView({
       </section>
 
       {/* My Chopes section */}
-      <section className="px-4 space-y-3">
+      <section className="px-4 md:px-6 space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-foreground flex items-center gap-2">
             <Package className="size-5 text-primary" />
@@ -1352,7 +1352,7 @@ export function MyStuffView({
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             {previewChopes.map((chope) => (
               <ChopeCard
                 key={chope.id}
@@ -1381,7 +1381,7 @@ export function MyStuffView({
       </section>
 
       {/* My Listings section */}
-      <section className="px-4 space-y-3">
+      <section className="px-4 md:px-6 space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-foreground flex items-center gap-2">
             <Gift className="size-5 text-success" />
@@ -1397,7 +1397,7 @@ export function MyStuffView({
             <p className="text-sm text-muted-foreground mt-1">Got stuff to give away? List them now!</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             {activeListings.map((listing) => (
               <ListingCard
                 key={listing.id}
