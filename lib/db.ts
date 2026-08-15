@@ -11,6 +11,17 @@ export interface User {
   created_at: string
 }
 
+/** `0` means unlimited — How many was left blank. */
+export function isUnlimitedQuantity(quantity: number | null | undefined): boolean {
+  return !quantity
+}
+
+export function listingQuantityLeftLabel(quantity: number, remaining: number): string {
+  if (isUnlimitedQuantity(quantity)) return 'Available'
+  if (remaining <= 0) return 'Fully choped'
+  return `${remaining} left`
+}
+
 export interface Listing {
   id: string
   giver_id: string
@@ -525,15 +536,22 @@ export async function deleteChope(chopeId: string): Promise<boolean> {
     return false
   }
 
-  const newQuantity = Math.min(
-    listing.quantity_remaining + chope.quantity,
-    listing.quantity
-  )
+  if (!isUnlimitedQuantity(listing.quantity)) {
+    const newQuantity = Math.min(
+      listing.quantity_remaining + chope.quantity,
+      listing.quantity
+    )
 
-  const { error: updateError } = await supabase
-    .from('listings')
-    .update({ quantity_remaining: newQuantity })
-    .eq('id', chope.listing_id)
+    const { error: updateError } = await supabase
+      .from('listings')
+      .update({ quantity_remaining: newQuantity })
+      .eq('id', chope.listing_id)
+
+    if (updateError) {
+      console.error('Error restoring quantity:', updateError)
+      return false
+    }
+  }
 
   if (updateError) {
     console.error('Error restoring quantity:', updateError)

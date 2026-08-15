@@ -2,6 +2,7 @@
 
 import { Listing } from '@/lib/types'
 import type { Listing as DBListing } from '@/lib/db'
+import { isUnlimitedQuantity, listingQuantityLeftLabel } from '@/lib/db'
 import { Badge } from '@/components/ui/badge'
 import { MediaCarousel } from './media-carousel'
 import { ExpandableDescription } from './expandable-description'
@@ -25,7 +26,8 @@ export function FeedCard({ listing, userId, onChopeSuccess, highlighted }: FeedC
   const media = isDBListing ? listing.media : (listing as Listing).media
   const endsAt = isDBListing ? (listing.ends_at ? new Date(listing.ends_at) : null) : (listing as Listing).endsAt
   const quantityRemaining = isDBListing ? listing.quantity_remaining : (listing as Listing).quantityRemaining
-  const isFullyChoped = quantityRemaining <= 0
+  const isUnlimited = isUnlimitedQuantity(listing.quantity)
+  const isFullyChoped = !isUnlimited && quantityRemaining <= 0
 
   return (
     <article
@@ -95,7 +97,7 @@ export function FeedCard({ listing, userId, onChopeSuccess, highlighted }: FeedC
               )}
             >
               <Package className="size-4" />
-              <span>{isFullyChoped ? 'Fully choped' : `${quantityRemaining} left`}</span>
+              <span>{listingQuantityLeftLabel(listing.quantity, quantityRemaining)}</span>
             </div>
           </div>
         </div>

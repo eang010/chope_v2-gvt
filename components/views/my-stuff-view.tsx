@@ -50,6 +50,7 @@ import {
   getUserById, getChopesByUserId, getGivenCount,
   updateUserProfile, getListingsByUserId, deleteListing, deleteChope,
   uploadListingImage, updateListing, replaceListingMedia, setListingArchived,
+  isUnlimitedQuantity, listingQuantityLeftLabel,
 } from '@/lib/db'
 import type { User as DBUser, Chope as DBChope, Listing as DBListing } from '@/lib/db'
 
@@ -360,7 +361,9 @@ function ListingCard({
   const [showChopers, setShowChopers] = useState(false)
 
   const chopersCount = listing.chopes?.length || 0
-  const hasBeenChoped = chopersCount > 0 || listing.quantity_remaining < listing.quantity
+  const hasBeenChoped =
+    chopersCount > 0 ||
+    (!isUnlimitedQuantity(listing.quantity) && listing.quantity_remaining < listing.quantity)
   const canEdit = !listing.is_archived
   const endsAt = listing.ends_at ? new Date(listing.ends_at) : null
 
@@ -391,7 +394,7 @@ function ListingCard({
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-xs text-primary font-medium">
-              {listing.quantity_remaining} left
+              {listingQuantityLeftLabel(listing.quantity, listing.quantity_remaining)}
             </span>
             {chopersCount > 0 && (
               <button
@@ -534,7 +537,9 @@ function ArchivedListingCard({
             </button>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{listing.quantity} given away</span>
+            <span>
+              {isUnlimitedQuantity(listing.quantity) ? 'Available' : `${listing.quantity} given away`}
+            </span>
             <span>&bull;</span>
             <span>{formatDistanceToNow(new Date(listing.created_at), { addSuffix: true })}</span>
           </div>
@@ -652,7 +657,7 @@ function EditListingDrawer({
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
   const [location, setLocation] = useState('')
-  const [quantity, setQuantity] = useState(1)
+  const [quantity, setQuantity] = useState<number | undefined>(undefined)
   const [images, setImages] = useState<EditImage[]>([])
   const [hasEndDate, setHasEndDate] = useState(false)
   const [endDate, setEndDate] = useState(todayInSingapore)
@@ -665,7 +670,9 @@ function EditListingDrawer({
   imagesRef.current = images
 
   const chopedCount = listing
-    ? listing.quantity - listing.quantity_remaining
+    ? isUnlimitedQuantity(listing.quantity)
+      ? listing.chopes?.reduce((sum, chope) => sum + chope.quantity, 0) || 0
+      : listing.quantity - listing.quantity_remaining
     : 0
   const minQuantity = Math.max(chopedCount, 1)
 
@@ -675,7 +682,7 @@ function EditListingDrawer({
     setDescription(listing.description || '')
     setCategory(listing.category)
     setLocation(listing.location)
-    setQuantity(listing.quantity)
+    setQuantity(isUnlimitedQuantity(listing.quantity) ? undefined : listing.quantity)
     setImages(
       (listing.media || [])
         .sort((a, b) => a.display_order - b.display_order)
@@ -741,7 +748,7 @@ function EditListingDrawer({
       alert('Please fill in title, category, collection instructions, and at least one photo.')
       return
     }
-    if (quantity < minQuantity) {
+    if (quantity != null && quantity < minQuantity) {
       alert(`Quantity must be at least ${minQuantity} (${chopedCount} already choped).`)
       return
     }
@@ -765,14 +772,17 @@ function EditListingDrawer({
         }
       }
 
-      const quantityRemaining = quantity - chopedCount
+      const savedQuantity = quantity ?? 0
+      const quantityRemaining = isUnlimitedQuantity(savedQuantity)
+        ? 0
+        : savedQuantity - chopedCount
 
       const updatedListing = await updateListing(listing.id, {
         title: title.trim(),
         description: description.trim() || null,
         category,
         location: trimmedLocation,
-        quantity,
+        quantity: savedQuantity,
         quantity_remaining: quantityRemaining,
         ends_at: buildEndsAtIsoInSingapore(hasEndDate, endDate, endTime),
       })
@@ -814,7 +824,7 @@ function EditListingDrawer({
     category &&
     location.trim() &&
     images.length > 0 &&
-    quantity >= minQuantity &&
+    (quantity == null || quantity >= minQuantity) &&
     !isPreparingPhotos
 
   return (
@@ -896,9 +906,11 @@ function EditListingDrawer({
               onChange={setQuantity}
               min={minQuantity}
               max={99}
+              allowEmpty
               disabled={isSaving}
               className="rounded-xl"
             />
+            <p className="text-xs text-muted-foreground">N/A means unlimited.</p>
             {chopedCount > 0 && (
               <p className="text-xs text-muted-foreground">
                 {chopedCount} already choped — minimum quantity is {chopedCount}.

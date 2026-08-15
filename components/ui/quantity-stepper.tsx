@@ -5,10 +5,11 @@ import { Minus, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface QuantityStepperProps {
-  value: number
-  onChange: (value: number) => void
+  value?: number
+  onChange: (value: number | undefined) => void
   min?: number
   max?: number
+  allowEmpty?: boolean
   disabled?: boolean
   className?: string
   id?: string
@@ -20,13 +21,15 @@ export function QuantityStepper({
   onChange,
   min = 1,
   max = 99,
+  allowEmpty = false,
   disabled = false,
   className,
   id,
   'aria-labelledby': ariaLabelledby,
 }: QuantityStepperProps) {
-  const atMin = value <= min
-  const atMax = value >= max
+  const empty = value == null
+  const atMin = empty || value <= min
+  const atMax = !empty && value >= max
 
   return (
     <div
@@ -42,8 +45,15 @@ export function QuantityStepper({
     >
       <button
         type="button"
-        onClick={() => onChange(Math.max(min, value - 1))}
-        disabled={disabled || atMin}
+        onClick={() => {
+          if (empty) return
+          if (allowEmpty && value <= min) {
+            onChange(undefined)
+            return
+          }
+          onChange(Math.max(min, value - 1))
+        }}
+        disabled={disabled || empty || (atMin && !allowEmpty)}
         className={cn(
           'size-10 rounded-full flex items-center justify-center transition-colors',
           atMin || disabled
@@ -58,11 +68,11 @@ export function QuantityStepper({
         className="text-2xl font-bold text-foreground w-12 text-center tabular-nums"
         aria-live="polite"
       >
-        {value}
+        {empty ? 'N/A' : value}
       </span>
       <button
         type="button"
-        onClick={() => onChange(Math.min(max, value + 1))}
+        onClick={() => onChange(empty ? min : Math.min(max, value + 1))}
         disabled={disabled || atMax}
         className={cn(
           'size-10 rounded-full flex items-center justify-center transition-colors',

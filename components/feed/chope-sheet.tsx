@@ -24,7 +24,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { Listing } from '@/lib/types'
 import type { Listing as DBListing } from '@/lib/db'
-import { createChope, updateListingQuantity, getChopesByUserAndListing } from '@/lib/db'
+import { createChope, updateListingQuantity, getChopesByUserAndListing, isUnlimitedQuantity } from '@/lib/db'
 import { cn } from '@/lib/utils'
 import { Check, Hand, Minus, Plus } from 'lucide-react'
 
@@ -56,10 +56,11 @@ export function ChopeSheet({ listing, userId, trigger, onChopeSuccess }: ChopeSh
   const isDBListing = 'quantity_remaining' in listing
   const quantityRemaining = isDBListing ? listing.quantity_remaining : listing.quantityRemaining
   const media = isDBListing ? listing.media : listing.media
+  const unlimited = isUnlimitedQuantity(listing.quantity)
   
-  const isFullyChoped = quantityRemaining <= 0
+  const isFullyChoped = !unlimited && quantityRemaining <= 0
   const isOwnListing = getListingGiverId(listing) === userId
-  const maxQuantity = quantityRemaining
+  const maxQuantity = unlimited ? 99 : quantityRemaining
 
   const disabledButtonClass = cn(
     'w-full rounded-xl font-semibold',
@@ -86,12 +87,13 @@ export function ChopeSheet({ listing, userId, trigger, onChopeSuccess }: ChopeSh
       return false
     }
 
-    const newQty = quantityRemaining - quantity
-    const updated = await updateListingQuantity(listing.id, newQty)
-
-    if (!updated) {
-      setIsSubmitting(false)
-      return false
+    const newQty = unlimited ? quantityRemaining : quantityRemaining - quantity
+    if (!unlimited) {
+      const updated = await updateListingQuantity(listing.id, newQty)
+      if (!updated) {
+        setIsSubmitting(false)
+        return false
+      }
     }
 
     setIsSubmitted(true)
@@ -228,7 +230,7 @@ export function ChopeSheet({ listing, userId, trigger, onChopeSuccess }: ChopeSh
                   <p className="font-medium text-foreground truncate">{listing.title}</p>
                   <p className="text-sm text-muted-foreground line-clamp-3">{listing.location}</p>
                   <p className="text-xs text-primary font-medium">
-                    {quantityRemaining} left
+                    {unlimited ? 'Available' : `${quantityRemaining} left`}
                   </p>
                 </div>
               </div>

@@ -14,42 +14,6 @@ import { createListing, uploadListingImage } from '@/lib/db'
 import { prepareListingImageFile } from '@/lib/prepare-listing-image'
 import { buildEndsAtIsoInSingapore, todayInSingapore } from '@/lib/singapore-time'
 
-function useUnlockOnLeave(
-  ref: React.RefObject<HTMLElement | null>,
-  canUnlock: boolean,
-  unlocked: boolean,
-  setUnlocked: (value: boolean) => void,
-) {
-  useEffect(() => {
-    if (!canUnlock) {
-      if (unlocked) setUnlocked(false)
-      return
-    }
-    if (unlocked) return
-
-    const node = ref.current
-    if (!node) return
-
-    const onPointerDown = (event: PointerEvent) => {
-      if (node.contains(event.target as Node)) return
-      setUnlocked(true)
-    }
-
-    const onFocusOut = (event: FocusEvent) => {
-      const next = event.relatedTarget
-      if (next instanceof Node && node.contains(next)) return
-      setUnlocked(true)
-    }
-
-    document.addEventListener('pointerdown', onPointerDown)
-    node.addEventListener('focusout', onFocusOut)
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown)
-      node.removeEventListener('focusout', onFocusOut)
-    }
-  }, [canUnlock, unlocked, ref, setUnlocked])
-}
-
 interface GiveAwayViewProps {
   userId: string
   onNavigate: (nav: 'home') => void
@@ -63,7 +27,7 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
   const [location, setLocation] = useState('')
-  const [quantity, setQuantity] = useState(1)
+  const [quantity, setQuantity] = useState<number | undefined>(undefined)
   const [hasEndDate, setHasEndDate] = useState(false)
   const [endDate, setEndDate] = useState(todayInSingapore)
   const [endTime, setEndTime] = useState('')
@@ -72,7 +36,6 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
   const [isDragging, setIsDragging] = useState(false)
   const [previewIndex, setPreviewIndex] = useState(0)
   const [carouselNonce, setCarouselNonce] = useState(0)
-  const [quantityUnlocked, setQuantityUnlocked] = useState(false)
   const [collectUnlocked, setCollectUnlocked] = useState(false)
   const [isPreparingPhotos, setIsPreparingPhotos] = useState(false)
   const imagesRef = useRef(images)
@@ -114,7 +77,8 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
 
   const handleSubmit = async () => {
     const trimmedLocation = location.trim()
-    if (!title || !category || !trimmedLocation || images.length === 0 || quantity < 1) {
+    const qty = quantity ?? 0
+    if (!title || !category || !trimmedLocation || images.length === 0) {
       alert('Please fill in all required fields')
       return
     }
@@ -149,8 +113,8 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
         category,
         condition: 'new',
         location: trimmedLocation,
-        quantity,
-        quantity_remaining: quantity,
+        quantity: qty,
+        quantity_remaining: qty,
         ends_at: endsAt,
         is_archived: false,
       }
@@ -224,8 +188,8 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
 
   const showWhat = images.length > 0
   const whatReady = Boolean(category && title.trim())
-  const showQuantity = showWhat && whatReady && quantityUnlocked
-  const showCollect = showQuantity && collectUnlocked && quantity >= 1
+  const showCollect = showWhat && whatReady && collectUnlocked
+  const showQuantity = showCollect
   const showSubmit = showCollect && Boolean(location.trim())
   const isValid = showSubmit
 
@@ -235,16 +199,14 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
   const submitRef = useRef<HTMLDivElement>(null)
   const revealedRef = useRef({ what: false, quantity: false, collect: false, submit: false })
 
-  useUnlockOnLeave(whatRef, showWhat && whatReady, quantityUnlocked, setQuantityUnlocked)
-
   useEffect(() => {
-    if (!showQuantity) {
+    if (!showWhat || !whatReady) {
       setCollectUnlocked(false)
       return
     }
     const timer = window.setTimeout(() => setCollectUnlocked(true), 400)
     return () => window.clearTimeout(timer)
-  }, [showQuantity])
+  }, [showWhat, whatReady])
 
   useEffect(() => {
     const revealed = revealedRef.current
@@ -255,13 +217,12 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
       revealed.what = true
       scrollTo(whatRef.current)
     }
-    if (showQuantity && !revealed.quantity) {
-      revealed.quantity = true
-      scrollTo(quantityRef.current)
-    }
     if (showCollect && !revealed.collect) {
       revealed.collect = true
       scrollTo(collectRef.current)
+    }
+    if (showQuantity && !revealed.quantity) {
+      revealed.quantity = true
     }
     if (showSubmit && !revealed.submit) {
       revealed.submit = true
@@ -305,7 +266,7 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
       <PageHeader
         icon={<Gift className="size-6 text-primary shrink-0" />}
         title="Got something to share?"
-        description="Snap it, tap a category, and list it — the office will chope it up."
+        description="Snap it, tap a category, and list it — let the office chope it up."
       />
 
       <div className="px-4 md:px-6 space-y-4">
@@ -487,29 +448,6 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
         </section>
         )}
 
-        {showQuantity && (
-        <section
-          ref={quantityRef}
-          className="rounded-2xl border border-border bg-card p-4 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300"
-        >
-          <div>
-            <h2 className="font-semibold text-foreground">How many?</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">How many can people chope?</p>
-          </div>
-          <QuantityStepper
-            aria-labelledby="quantity-label"
-            value={quantity}
-            onChange={setQuantity}
-            min={1}
-            max={99}
-            disabled={isSubmitting}
-          />
-          <span id="quantity-label" className="sr-only">
-            Quantity available
-          </span>
-        </section>
-        )}
-
         {showCollect && (
         <section
           ref={collectRef}
@@ -583,6 +521,30 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
               </div>
             </div>
           )}
+        </section>
+        )}
+
+        {showQuantity && (
+        <section
+          ref={quantityRef}
+          className="rounded-2xl border border-border bg-card p-4 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300"
+        >
+          <div>
+            <h2 className="font-semibold text-foreground">How many?</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Optional — leave as N/A for unlimited.</p>
+          </div>
+          <QuantityStepper
+            aria-labelledby="quantity-label"
+            value={quantity}
+            onChange={setQuantity}
+            min={1}
+            max={99}
+            allowEmpty
+            disabled={isSubmitting}
+          />
+          <span id="quantity-label" className="sr-only">
+            Quantity available
+          </span>
         </section>
         )}
 
