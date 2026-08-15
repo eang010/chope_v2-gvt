@@ -14,6 +14,42 @@ import { createListing, uploadListingImage } from '@/lib/db'
 import { prepareListingImageFile } from '@/lib/prepare-listing-image'
 import { buildEndsAtIsoInSingapore, todayInSingapore } from '@/lib/singapore-time'
 
+function useUnlockOnLeave(
+  ref: React.RefObject<HTMLElement | null>,
+  canUnlock: boolean,
+  unlocked: boolean,
+  setUnlocked: (value: boolean) => void,
+) {
+  useEffect(() => {
+    if (!canUnlock) {
+      if (unlocked) setUnlocked(false)
+      return
+    }
+    if (unlocked) return
+
+    const node = ref.current
+    if (!node) return
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (node.contains(event.target as Node)) return
+      setUnlocked(true)
+    }
+
+    const onFocusOut = (event: FocusEvent) => {
+      const next = event.relatedTarget
+      if (next instanceof Node && node.contains(next)) return
+      setUnlocked(true)
+    }
+
+    document.addEventListener('pointerdown', onPointerDown)
+    node.addEventListener('focusout', onFocusOut)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      node.removeEventListener('focusout', onFocusOut)
+    }
+  }, [canUnlock, unlocked, ref, setUnlocked])
+}
+
 interface GiveAwayViewProps {
   userId: string
   onNavigate: (nav: 'home') => void
@@ -36,6 +72,7 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
   const [isDragging, setIsDragging] = useState(false)
   const [previewIndex, setPreviewIndex] = useState(0)
   const [carouselNonce, setCarouselNonce] = useState(0)
+  const [quantityUnlocked, setQuantityUnlocked] = useState(false)
   const [collectUnlocked, setCollectUnlocked] = useState(false)
   const [isPreparingPhotos, setIsPreparingPhotos] = useState(false)
   const imagesRef = useRef(images)
@@ -187,7 +224,7 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
 
   const showWhat = images.length > 0
   const whatReady = Boolean(category && title.trim())
-  const showQuantity = showWhat && whatReady
+  const showQuantity = showWhat && whatReady && quantityUnlocked
   const showCollect = showQuantity && collectUnlocked && quantity >= 1
   const showSubmit = showCollect && Boolean(location.trim())
   const isValid = showSubmit
@@ -197,6 +234,8 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
   const collectRef = useRef<HTMLElement>(null)
   const submitRef = useRef<HTMLDivElement>(null)
   const revealedRef = useRef({ what: false, quantity: false, collect: false, submit: false })
+
+  useUnlockOnLeave(whatRef, showWhat && whatReady, quantityUnlocked, setQuantityUnlocked)
 
   useEffect(() => {
     if (!showQuantity) {
