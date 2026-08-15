@@ -8,22 +8,33 @@ interface MediaCarouselProps {
   media: { type: 'image' | 'video'; url: string }[]
   alt: string
   className?: string
+  onIndexChange?: (index: number) => void
 }
 
-export function MediaCarousel({ media, alt, className }: MediaCarouselProps) {
+export function MediaCarousel({ media, alt, className, onIndexChange }: MediaCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const trackRef = useRef<HTMLDivElement>(null)
-  const slideRefs = useRef<(HTMLDivElement | null)[]>([])
+  const onIndexChangeRef = useRef(onIndexChange)
+  onIndexChangeRef.current = onIndexChange
 
   const hasMultiple = media.length > 1
+
+  const setIndex = useCallback(
+    (nextIndex: number) => {
+      const clamped = Math.min(Math.max(0, nextIndex), media.length - 1)
+      setCurrentIndex(clamped)
+      onIndexChangeRef.current?.(clamped)
+    },
+    [media.length]
+  )
 
   const updateIndexFromScroll = useCallback(() => {
     const track = trackRef.current
     if (!track || !hasMultiple) return
 
-    const index = Math.round(track.scrollLeft / track.clientWidth)
-    setCurrentIndex(Math.min(Math.max(0, index), media.length - 1))
-  }, [hasMultiple, media.length])
+    const nextIndex = Math.round(track.scrollLeft / track.clientWidth)
+    setIndex(nextIndex)
+  }, [hasMultiple, setIndex])
 
   useEffect(() => {
     const track = trackRef.current
@@ -34,11 +45,12 @@ export function MediaCarousel({ media, alt, className }: MediaCarouselProps) {
     return () => track.removeEventListener('scroll', updateIndexFromScroll)
   }, [hasMultiple, media.length, updateIndexFromScroll])
 
-  const scrollToIndex = (index: number) => {
-    slideRefs.current[index]?.scrollIntoView({
-      inline: 'start',
+  const scrollToIndex = (nextIndex: number) => {
+    const track = trackRef.current
+    if (!track) return
+    track.scrollTo({
+      left: nextIndex * track.clientWidth,
       behavior: 'smooth',
-      block: 'nearest',
     })
   }
 
@@ -59,16 +71,13 @@ export function MediaCarousel({ media, alt, className }: MediaCarouselProps) {
         className={cn(
           'flex h-full w-full',
           hasMultiple &&
-            'overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide overscroll-x-contain'
+            'overflow-x-auto snap-x snap-mandatory scrollbar-hide overscroll-x-contain'
         )}
       >
         {media.map((item, index) => (
           <div
             key={index}
-            ref={(el) => {
-              slideRefs.current[index] = el
-            }}
-            className="h-full w-full shrink-0 flex-[0_0_100%] snap-start overflow-hidden"
+            className="h-full min-w-full w-full shrink-0 snap-start overflow-hidden"
           >
             {item.type === 'image' ? (
               <img

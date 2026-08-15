@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { categoryOptions } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/layout/page-header'
+import { MediaCarousel } from '@/components/feed/media-carousel'
 import { Gift, ImagePlus, X, MapPin, Clock, Check } from 'lucide-react'
 import { createListing, uploadListingImage } from '@/lib/db'
 import { buildEndsAtIsoInSingapore, todayInSingapore } from '@/lib/singapore-time'
@@ -68,6 +69,8 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [previewIndex, setPreviewIndex] = useState(0)
+  const [carouselNonce, setCarouselNonce] = useState(0)
   const [quantityUnlocked, setQuantityUnlocked] = useState(false)
   const [collectUnlocked, setCollectUnlocked] = useState(false)
 
@@ -154,6 +157,35 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
     URL.revokeObjectURL(newPreviews[index])
     newPreviews.splice(index, 1)
     setImagePreviews(newPreviews)
+    setPreviewIndex((current) => {
+      const nextLen = images.length - 1
+      if (nextLen <= 0) return 0
+      if (index < current) return current - 1
+      if (index === current) return Math.min(current, nextLen - 1)
+      return current
+    })
+  }
+
+  const setCover = (index: number) => {
+    if (index <= 0) {
+      setPreviewIndex(0)
+      setCarouselNonce((value) => value + 1)
+      return
+    }
+    setImages((prev) => {
+      const next = [...prev]
+      const [picked] = next.splice(index, 1)
+      next.unshift(picked)
+      return next
+    })
+    setImagePreviews((prev) => {
+      const next = [...prev]
+      const [picked] = next.splice(index, 1)
+      next.unshift(picked)
+      return next
+    })
+    setPreviewIndex(0)
+    setCarouselNonce((value) => value + 1)
   }
 
   const showWhat = images.length > 0
@@ -243,13 +275,8 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
       />
 
       <div className="px-4 md:px-6 space-y-4">
-        <div className="space-y-2">
-        <label
-          className={cn(
-            'block cursor-pointer rounded-2xl border-2 border-dashed transition-colors overflow-hidden',
-            isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/60',
-            images.length === 0 && 'bg-muted/40'
-          )}
+        <div
+          className="space-y-2"
           onDragOver={(e) => {
             e.preventDefault()
             setIsDragging(true)
@@ -262,65 +289,92 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
           }}
         >
           {images.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 px-6 py-14 text-center">
-              <div className="size-14 rounded-full bg-primary/10 flex items-center justify-center">
-                <ImagePlus className="size-7 text-primary" />
+            <label
+              className={cn(
+                'block cursor-pointer rounded-2xl border-2 border-dashed transition-colors overflow-hidden bg-muted/40',
+                isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/60'
+              )}
+            >
+              <div className="flex flex-col items-center justify-center gap-2 px-6 py-14 text-center">
+                <div className="size-14 rounded-full bg-primary/10 flex items-center justify-center">
+                  <ImagePlus className="size-7 text-primary" />
+                </div>
+                <p className="font-semibold text-foreground">Drop a photo or tap to add</p>
+                <p className="text-sm text-muted-foreground">First one is the cover. Up to 5 photos.</p>
+                {fileInput}
               </div>
-              <p className="font-semibold text-foreground">Drop a photo or tap to add</p>
-              <p className="text-sm text-muted-foreground">First one is the cover. Up to 5 photos.</p>
-              {fileInput}
-            </div>
+            </label>
           ) : (
-            <div className="relative aspect-[16/10] bg-muted">
-              <img
-                src={imagePreviews[0]}
-                alt="Cover"
-                className="h-full w-full object-cover"
+            <div
+              className={cn(
+                'relative overflow-hidden rounded-2xl border-2',
+                isDragging ? 'border-primary' : 'border-border'
+              )}
+            >
+              <MediaCarousel
+                key={carouselNonce}
+                media={imagePreviews.map((url) => ({ type: 'image' as const, url }))}
+                alt="Listing photos"
+                className="aspect-[16/10]"
+                onIndexChange={setPreviewIndex}
               />
-              <span className="absolute bottom-3 left-3 rounded-full bg-primary px-2.5 py-0.5 text-xs font-medium text-primary-foreground">
-                Cover
-              </span>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  removeImage(0)
-                }}
-                className="absolute top-3 right-3 size-8 rounded-full bg-card/90 flex items-center justify-center shadow-sm"
-                aria-label="Remove cover photo"
-              >
-                <X className="size-4" />
-              </button>
+              {previewIndex === 0 && (
+                <span className="absolute bottom-3 left-3 z-10 rounded-full bg-primary px-2.5 py-0.5 text-xs font-medium text-primary-foreground pointer-events-none">
+                  Cover
+                </span>
+              )}
             </div>
           )}
-        </label>
 
-        {images.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-            {imagePreviews.slice(1).map((preview, i) => {
-              const index = i + 1
-              return (
-                <div key={preview} className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
-                  <img src={preview} alt={`Photo ${index + 1}`} className="h-full w-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(index)}
-                    className="absolute top-1 right-1 size-5 rounded-full bg-card/90 flex items-center justify-center"
-                    aria-label={`Remove photo ${index + 1}`}
-                  >
-                    <X className="size-3" />
-                  </button>
-                </div>
-              )
-            })}
-            {images.length < 5 && (
-              <label className="size-16 shrink-0 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer">
-                <ImagePlus className="size-5" />
-                {fileInput}
-              </label>
-            )}
-          </div>
-        )}
+          {images.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">Tap a photo to make it the cover.</p>
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide pt-1 pr-1">
+                {imagePreviews.map((preview, index) => {
+                  const isCover = index === 0
+                  const isActive = index === previewIndex
+                  return (
+                    <div key={preview} className="relative shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setCover(index)}
+                        className={cn(
+                          'size-16 overflow-hidden rounded-xl bg-muted ring-2 ring-offset-2 ring-offset-background transition-colors',
+                          isCover
+                            ? 'ring-primary'
+                            : isActive
+                              ? 'ring-primary/40'
+                              : 'ring-transparent hover:ring-border'
+                        )}
+                        aria-label={isCover ? 'Cover photo' : `Make photo ${index + 1} the cover`}
+                      >
+                        <img src={preview} alt={`Photo ${index + 1}`} className="h-full w-full object-cover" />
+                      </button>
+                      {isCover && (
+                        <span className="absolute bottom-1 left-1 rounded bg-primary px-1 py-px text-[9px] font-medium text-primary-foreground pointer-events-none">
+                          Cover
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute -top-1 -right-1 size-5 rounded-full bg-card shadow-sm flex items-center justify-center"
+                        aria-label={`Remove photo ${index + 1}`}
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </div>
+                  )
+                })}
+                {images.length < 5 && (
+                  <label className="size-16 shrink-0 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer">
+                    <ImagePlus className="size-5" />
+                    {fileInput}
+                  </label>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {showWhat && (
