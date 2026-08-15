@@ -1,9 +1,18 @@
+import { categoryOptions } from '@/lib/mock-data'
 import type { NavItem } from '@/lib/types'
 
 export type AppNavState = {
   nav: NavItem
   urgentOnly: boolean
   focusListingId: string | null
+  category: string | null
+}
+
+const CATEGORY_IDS = new Set(categoryOptions.map((option) => option.id))
+
+function parseCategory(value: string | null | undefined): string | null {
+  if (!value || !CATEGORY_IDS.has(value)) return null
+  return value
 }
 
 const NAV_ITEMS: NavItem[] = ['home', 'lobang', 'give-away', 'my-stuff']
@@ -13,7 +22,7 @@ export function isNavItem(value: string): value is NavItem {
 }
 
 export function defaultAppNavState(): AppNavState {
-  return { nav: 'home', urgentOnly: false, focusListingId: null }
+  return { nav: 'home', urgentOnly: false, focusListingId: null, category: null }
 }
 
 export function appNavStateFromSearch(search: string): AppNavState {
@@ -23,6 +32,7 @@ export function appNavStateFromSearch(search: string): AppNavState {
     nav: tab && isNavItem(tab) ? tab : 'home',
     urgentOnly: params.get('urgent') === '1',
     focusListingId: params.get('focus'),
+    category: parseCategory(params.get('category')),
   }
 }
 
@@ -30,7 +40,8 @@ export function appNavStatesEqual(a: AppNavState, b: AppNavState): boolean {
   return (
     a.nav === b.nav &&
     a.urgentOnly === b.urgentOnly &&
-    a.focusListingId === b.focusListingId
+    a.focusListingId === b.focusListingId &&
+    a.category === b.category
   )
 }
 
@@ -39,6 +50,7 @@ export function urlForAppNavState(state: AppNavState, pathname = '/'): string {
   if (state.nav !== 'home') params.set('tab', state.nav)
   if (state.urgentOnly) params.set('urgent', '1')
   if (state.focusListingId) params.set('focus', state.focusListingId)
+  if (state.category) params.set('category', state.category)
   const qs = params.toString()
   return qs ? `${pathname}?${qs}` : pathname
 }
@@ -55,6 +67,7 @@ export function appNavStateFromHistoryState(data: unknown): AppNavState | null {
     nav: raw.nav,
     urgentOnly: Boolean(raw.urgentOnly),
     focusListingId: raw.focusListingId ?? null,
+    category: parseCategory(raw.category),
   }
 }
 

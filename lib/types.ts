@@ -55,4 +55,5 @@ export type NavItem = 'home' | 'lobang' | 'give-away' | 'my-stuff'
 export type NavigateOptions = {
   urgentOnly?: boolean
   focusListingId?: string
+  category?: string
 }

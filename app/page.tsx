@@ -43,6 +43,9 @@ export default function Home() {
   const [focusListingId, setFocusListingId] = useState<string | null>(
     () => initialNavState().focusListingId
   )
+  const [focusCategory, setFocusCategory] = useState<string | null>(
+    () => initialNavState().category
+  )
   const [listingsRefreshKey, setListingsRefreshKey] = useState(0)
   const navStateRef = useRef<AppNavState>(initialNavState())
   const historyReadyRef = useRef(false)
@@ -96,6 +99,7 @@ export default function Home() {
     setActiveNav(state.nav)
     setUrgentOnly(state.urgentOnly)
     setFocusListingId(state.focusListingId)
+    setFocusCategory(state.category)
   }, [])
 
   const syncHistory = useCallback(
@@ -123,6 +127,7 @@ export default function Home() {
         nav: item,
         urgentOnly: options?.urgentOnly ?? false,
         focusListingId: options?.focusListingId ?? null,
+        category: options?.category ?? null,
       }
       if (appNavStatesEqual(navStateRef.current, next)) return
       applyNavState(next)
@@ -242,6 +247,7 @@ export default function Home() {
               urgentOnly={urgentOnly}
               onUrgentOnlyChange={handleUrgentOnlyChange}
               focusListingId={focusListingId}
+              focusCategory={focusCategory}
               onFocusListingHandled={() => setFocusListingId(null)}
               onChopeActivity={() => setListingsRefreshKey((k) => k + 1)}
             />

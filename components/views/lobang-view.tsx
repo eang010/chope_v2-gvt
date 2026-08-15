@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { categories, listingMatchesCategory } from '@/lib/mock-data'
 import { FeedCard } from '@/components/feed/feed-card'
 import { PageHeader } from '@/components/layout/page-header'
@@ -16,6 +16,7 @@ interface LobangViewProps {
   urgentOnly?: boolean
   onUrgentOnlyChange?: (urgentOnly: boolean) => void
   focusListingId?: string | null
+  focusCategory?: string | null
   onFocusListingHandled?: () => void
   onChopeActivity?: () => void
 }
@@ -26,11 +27,13 @@ export function LobangView({
   urgentOnly = false,
   onUrgentOnlyChange,
   focusListingId,
+  focusCategory,
   onFocusListingHandled,
   onChopeActivity,
 }: LobangViewProps) {
-  const [activeCategory, setActiveCategory] = useState('All')
+  const [activeCategory, setActiveCategory] = useState(focusCategory || 'All')
   const [listings, setListings] = useState<Listing[]>([])
+  const categoryRefs = useRef(new Map<string, HTMLButtonElement>())
   const [isLoading, setIsLoading] = useState(true)
   const [highlightedListingId, setHighlightedListingId] = useState<string | null>(null)
   const now = new Date()
@@ -59,7 +62,7 @@ export function LobangView({
       return
     }
 
-    setActiveCategory('All')
+    setActiveCategory(focusCategory || 'All')
 
     let highlightTimer: ReturnType<typeof setTimeout> | undefined
 
@@ -76,7 +79,22 @@ export function LobangView({
       clearTimeout(scrollTimer)
       if (highlightTimer) clearTimeout(highlightTimer)
     }
-  }, [focusListingId, isLoading, listings, onFocusListingHandled])
+  }, [focusListingId, focusCategory, isLoading, listings, onFocusListingHandled])
+
+  useEffect(() => {
+    if (focusListingId) return
+    if (focusCategory) {
+      setActiveCategory(focusCategory)
+      return
+    }
+    setActiveCategory('All')
+  }, [focusCategory, focusListingId])
+
+  useEffect(() => {
+    const node = categoryRefs.current.get(activeCategory)
+    if (!node) return
+    node.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+  }, [activeCategory])
 
   const handleChopeSuccess = (listingId: string, newQuantityRemaining: number) => {
     setListings((prev) =>
@@ -159,6 +177,10 @@ export function LobangView({
         {categories.map((category) => (
           <button
             key={category}
+            ref={(node) => {
+              if (node) categoryRefs.current.set(category, node)
+              else categoryRefs.current.delete(category)
+            }}
             onClick={() => setActiveCategory(category)}
             className={cn(
               'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors',
