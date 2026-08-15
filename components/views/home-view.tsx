@@ -24,8 +24,9 @@ function CategoryScroller({
   const [canScroll, setCanScroll] = useState(false)
   const [progress, setProgress] = useState(0)
   const [thumbRatio, setThumbRatio] = useState(1)
+  const [tileWidth, setTileWidth] = useState<number>()
 
-  const updateOverflow = () => {
+  const updateScroll = () => {
     const el = scrollerRef.current
     if (!el) return
     const maxScroll = el.scrollWidth - el.clientWidth
@@ -34,20 +35,59 @@ function CategoryScroller({
     setThumbRatio(el.scrollWidth > 0 ? el.clientWidth / el.scrollWidth : 1)
   }
 
+  const updateTileWidth = () => {
+    const el = scrollerRef.current
+    if (!el) return
+    const padding = 8
+    const gap = 8
+    const preferred = 108
+    const available = Math.max(preferred, el.clientWidth - padding)
+    const visible = (available + gap) / (preferred + gap)
+    const slots = Math.max(2.5, Math.ceil(visible) - 0.5)
+    setTileWidth((available - Math.floor(slots) * gap) / slots)
+  }
+
   useEffect(() => {
     const el = scrollerRef.current
     if (!el) return
-    updateOverflow()
-    el.addEventListener('scroll', updateOverflow, { passive: true })
-    window.addEventListener('resize', updateOverflow)
+    updateTileWidth()
+    const observer = new ResizeObserver(updateTileWidth)
+    observer.observe(el)
+    window.addEventListener('resize', updateTileWidth)
     return () => {
-      el.removeEventListener('scroll', updateOverflow)
-      window.removeEventListener('resize', updateOverflow)
+      observer.disconnect()
+      window.removeEventListener('resize', updateTileWidth)
     }
   }, [])
 
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el) return
+    updateScroll()
+    el.addEventListener('scroll', updateScroll, { passive: true })
+    return () => el.removeEventListener('scroll', updateScroll)
+  }, [tileWidth])
+
+  const thumbWidth = Math.max(thumbRatio * 100, 28)
+
   return (
     <div className="mb-3">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="text-left text-muted-foreground">
+          Looking for something specific?
+        </p>
+        {canScroll && (
+          <div className="relative h-1 w-12 shrink-0 overflow-hidden rounded-full bg-border" aria-hidden>
+            <div
+              className="absolute inset-y-0 rounded-full bg-primary/70"
+              style={{
+                width: `${thumbWidth}%`,
+                left: `${progress * (100 - thumbWidth)}%`,
+              }}
+            />
+          </div>
+        )}
+      </div>
       <div
         ref={scrollerRef}
         className="-mx-1 overflow-x-auto snap-x snap-mandatory scrollbar-hide"
@@ -60,6 +100,7 @@ function CategoryScroller({
                 key={option.id}
                 type="button"
                 onClick={() => onSelect(option.id)}
+                style={tileWidth ? { width: tileWidth } : undefined}
                 className={cn(
                   'flex w-[6.75rem] shrink-0 snap-start flex-col items-center gap-1.5 rounded-xl border border-border bg-card p-3 text-center transition-colors',
                   'text-muted-foreground hover:border-primary/50 hover:text-foreground'
@@ -76,17 +117,6 @@ function CategoryScroller({
           })}
         </div>
       </div>
-      {canScroll && (
-        <div className="relative ml-auto mt-2 h-1 w-8 overflow-hidden rounded-full bg-border" aria-hidden>
-          <div
-            className="absolute inset-y-0 rounded-full bg-primary/70"
-            style={{
-              width: `${Math.max(thumbRatio * 100, 28)}%`,
-              left: `${progress * (100 - Math.max(thumbRatio * 100, 28))}%`,
-            }}
-          />
-        </div>
-      )}
     </div>
   )
 }
@@ -306,9 +336,6 @@ export function HomeView({
       {/* Browse prompt */}
       <section className="px-4 md:px-6">
         <div className="bg-muted rounded-xl p-4 text-center">
-          <p className="text-muted-foreground mb-3">
-            Looking for something specific?
-          </p>
           <CategoryScroller onSelect={(category) => onNavigate('lobang', { category })} />
           <button
             type="button"
