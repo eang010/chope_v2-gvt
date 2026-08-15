@@ -256,6 +256,7 @@ export default function Home() {
           <TabPanel active={activeNav === 'give-away'}>
             <GiveAwayView
               userId={userId}
+              isActive={activeNav === 'give-away'}
               onNavigate={(nav) => handleNavigate(nav as NavItem)}
               onListingCreated={() => setListingsRefreshKey((k) => k + 1)}
             />

@@ -16,11 +16,12 @@ import { buildEndsAtIsoInSingapore, todayInSingapore } from '@/lib/singapore-tim
 
 interface GiveAwayViewProps {
   userId: string
+  isActive?: boolean
   onNavigate: (nav: 'home') => void
   onListingCreated?: () => void
 }
 
-export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayViewProps) {
+export function GiveAwayView({ userId, isActive = true, onNavigate, onListingCreated }: GiveAwayViewProps) {
   const [images, setImages] = useState<File[]>([])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [title, setTitle] = useState('')
@@ -40,6 +41,32 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
   const [isPreparingPhotos, setIsPreparingPhotos] = useState(false)
   const imagesRef = useRef(images)
   imagesRef.current = images
+  const imagePreviewsRef = useRef(imagePreviews)
+  imagePreviewsRef.current = imagePreviews
+
+  useEffect(() => {
+    if (isActive) return
+
+    imagePreviewsRef.current.forEach((url) => URL.revokeObjectURL(url))
+    setImages([])
+    setImagePreviews([])
+    setTitle('')
+    setDescription('')
+    setCategory('')
+    setLocation('')
+    setQuantity(undefined)
+    setHasEndDate(false)
+    setEndDate(todayInSingapore)
+    setEndTime('')
+    setIsSubmitted(false)
+    setIsSubmitting(false)
+    setIsDragging(false)
+    setPreviewIndex(0)
+    setCarouselNonce((value) => value + 1)
+    setCollectUnlocked(false)
+    setIsPreparingPhotos(false)
+    revealedRef.current = { what: false, quantity: false, collect: false, submit: false }
+  }, [isActive])
 
   const addImageFiles = async (fileList: FileList | File[]) => {
     const incoming = Array.from(fileList).filter(
