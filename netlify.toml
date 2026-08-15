@@ -1,0 +1,16 @@
+# Next.js App Router on Netlify — requires the official Next runtime (do not set a static publish dir like `out`).
+# Docs: https://docs.netlify.com/frameworks/next-js/overview/
+
+[build]
+  command = "pnpm run build"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"

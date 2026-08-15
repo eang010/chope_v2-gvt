@@ -1,0 +1,6 @@
+{
+  "framework": "container",
+  "handle": "chopesquad/chope",
+  "port": 3000,
+  "instanceType": "b.small"
+}
