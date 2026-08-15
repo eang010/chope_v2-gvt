@@ -18,13 +18,15 @@ import {
   urlForAppNavState,
   type AppNavState,
 } from '@/lib/app-navigation'
+import { authClient } from '@/lib/auth-client'
 import {
   clearAuthSession,
   getStoredUserId,
   migrateSessionFromSessionStorage,
+  setLastEmail,
   setStoredUserId,
 } from '@/lib/auth-session'
-import { getUserById } from '@/lib/db'
+import { getOrCreateUserByEmail, getUserById, normalizeEmail } from '@/lib/db'
 import { isSupabaseConfigured } from '@/lib/supabase/client'
 import { NavItem, type NavigateOptions } from '@/lib/types'
 
@@ -56,18 +58,31 @@ export default function Home() {
       try {
         migrateSessionFromSessionStorage()
         const storedUserId = getStoredUserId()
-        if (!storedUserId) return
+        if (storedUserId) {
+          setIsLoading(true)
+          const user = await getUserById(storedUserId)
+          if (cancelled) return
 
-        setIsLoading(true)
-        const user = await getUserById(storedUserId)
-        if (cancelled) return
-
-        if (!user) {
+          if (user) {
+            setUserId(storedUserId)
+            setIsLoggedIn(true)
+            return
+          }
           clearAuthSession()
-          return
         }
 
-        setUserId(storedUserId)
+        const { data: session } = await authClient.getSession()
+        const email = session?.user?.email
+        if (!email) return
+
+        setIsLoading(true)
+        const oauthUser = await getOrCreateUserByEmail(email)
+        if (cancelled) return
+        if (!oauthUser) return
+
+        setLastEmail(normalizeEmail(email))
+        setStoredUserId(oauthUser.id)
+        setUserId(oauthUser.id)
         setIsLoggedIn(true)
       } catch (error) {
         console.error('Failed to restore session', error)
@@ -132,6 +147,7 @@ export default function Home() {
   )
 
   const handleLogout = () => {
+    void authClient.signOut()
     clearAuthSession()
     setUserId(null)
     setIsLoggedIn(false)

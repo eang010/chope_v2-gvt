@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import Image from 'next/image'
 import { ArrowRight } from 'lucide-react'
+import { authClient } from '@/lib/auth-client'
 import { getLastEmail, setLastEmail } from '@/lib/auth-session'
 import { getOrCreateUserByEmail, normalizeEmail } from '@/lib/db'
 
@@ -15,12 +16,37 @@ interface LoginViewProps {
 export function LoginView({ onLogin }: LoginViewProps) {
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isTechPassLoading, setIsTechPassLoading] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     const lastEmail = getLastEmail()
     if (lastEmail) setEmail(lastEmail)
+
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('authError') || params.get('error')) {
+      setError('TechPass sign-in was cancelled or failed. Please try again.')
+    }
   }, [])
+
+  const handleTechPass = async () => {
+    setError('')
+    setIsTechPassLoading(true)
+    try {
+      const { error: oauthError } = await authClient.signIn.oauth2({
+        providerId: 'techpass',
+        callbackURL: '/',
+        errorCallbackURL: '/?authError=techpass',
+      })
+      if (oauthError) {
+        setError(oauthError.message || 'Could not start TechPass sign-in.')
+        setIsTechPassLoading(false)
+      }
+    } catch {
+      setError('Could not start TechPass sign-in.')
+      setIsTechPassLoading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -108,7 +134,7 @@ export function LoginView({ onLogin }: LoginViewProps) {
             
             <Button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || isTechPassLoading}
               className="w-full h-12 rounded-xl text-base font-semibold"
             >
               {isLoading ? (
@@ -121,6 +147,25 @@ export function LoginView({ onLogin }: LoginViewProps) {
               )}
             </Button>
           </form>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">or</span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isLoading || isTechPassLoading}
+            onClick={handleTechPass}
+            className="w-full h-12 rounded-xl text-base font-semibold"
+          >
+            {isTechPassLoading ? 'Redirecting to TechPass...' : 'Sign in with TechPass'}
+          </Button>
         </div>
         
         {/* Footer text */}
