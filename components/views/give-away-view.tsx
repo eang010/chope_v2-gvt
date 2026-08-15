@@ -19,13 +19,6 @@ import { Gift, ImagePlus, X, MapPin, Clock, Check } from 'lucide-react'
 import { createListing, uploadListingImage } from '@/lib/db'
 import { buildEndsAtIsoInSingapore, todayInSingapore } from '@/lib/singapore-time'
 
-const conditions = [
-  { value: 'new', label: 'New', description: 'Never used, still in packaging' },
-  { value: 'like-new', label: 'Like New', description: 'Used once or twice, perfect condition' },
-  { value: 'used', label: 'Used', description: 'Visible signs of use but works perfectly' },
-  { value: 'well-loved', label: 'Well Loved', description: 'Shows wear but still has life left' },
-]
-
 interface GiveAwayViewProps {
   userId: string
   onNavigate: (nav: 'home') => void
@@ -38,7 +31,6 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
-  const [condition, setCondition] = useState('')
   const [location, setLocation] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [hasEndDate, setHasEndDate] = useState(false)
@@ -49,7 +41,7 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
 
   const handleSubmit = async () => {
     const trimmedLocation = location.trim()
-    if (!title || !category || !condition || !trimmedLocation || images.length === 0 || quantity < 1) {
+    if (!title || !category || !trimmedLocation || images.length === 0 || quantity < 1) {
       alert('Please fill in all required fields')
       return
     }
@@ -77,9 +69,9 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
       const listingData = {
         giver_id: userId,
         title,
-        description,
+        description: description.trim() || null,
         category,
-        condition,
+        condition: 'new',
         location: trimmedLocation,
         quantity,
         quantity_remaining: quantity,
@@ -135,7 +127,7 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
   }
 
   const isValid =
-    title && description && category && condition && location.trim() && images.length > 0 && quantity >= 1
+    title && category && location.trim() && images.length > 0 && quantity >= 1
 
   if (isSubmitted) {
     return (
@@ -206,6 +198,23 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
           </div>
         </div>
 
+        {/* Category */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground">
+            Category <span className="text-destructive">*</span>
+          </label>
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger className="w-full h-11">
+              <SelectValue placeholder="Select a category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.filter(c => c !== 'All').map((cat) => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Title */}
         <div className="space-y-2">
           <label htmlFor="title" className="text-sm font-medium text-foreground">
@@ -225,7 +234,7 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
         {/* Description */}
         <div className="space-y-2">
           <label htmlFor="description" className="text-sm font-medium text-foreground">
-            Description <span className="text-destructive">*</span>
+            Description
           </label>
           <Textarea
             id="description"
@@ -254,47 +263,6 @@ export function GiveAwayView({ userId, onNavigate, onListingCreated }: GiveAwayV
             max={99}
             disabled={isSubmitting}
           />
-        </div>
-
-        {/* Category */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">
-            Category <span className="text-destructive">*</span>
-          </label>
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="w-full h-11">
-              <SelectValue placeholder="Select a category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.filter(c => c !== 'All').map((cat) => (
-                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Condition */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">
-            Condition <span className="text-destructive">*</span>
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            {conditions.map((cond) => (
-              <button
-                key={cond.value}
-                onClick={() => setCondition(cond.value)}
-                className={cn(
-                  'p-3 rounded-xl border text-left transition-colors',
-                  condition === cond.value
-                    ? 'border-primary bg-primary/10'
-                    : 'border-border hover:border-primary/50'
-                )}
-              >
-                <p className="font-medium text-sm text-foreground">{cond.label}</p>
-                <p className="text-xs text-muted-foreground">{cond.description}</p>
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Collection instructions */}

@@ -18,13 +18,6 @@ interface FeedCardProps {
   highlighted?: boolean
 }
 
-const conditionLabels: Record<Listing['condition'], string> = {
-  'new': 'Brand New',
-  'like-new': 'Like New',
-  'used': 'Used',
-  'well-loved': 'Well Loved',
-}
-
 export function FeedCard({ listing, userId, onChopeSuccess, highlighted }: FeedCardProps) {
   // Handle both old Listing type and new DBListing type
   const isDBListing = 'giver_id' in listing
@@ -104,11 +97,6 @@ export function FeedCard({ listing, userId, onChopeSuccess, highlighted }: FeedC
               <span>{isFullyChoped ? 'Fully choped' : `${quantityRemaining} left`}</span>
             </div>
           </div>
-          
-          {/* Condition */}
-          <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
-            {conditionLabels[listing.condition as keyof typeof conditionLabels] || listing.condition}
-          </span>
         </div>
         
         {/* Chope button */}
