@@ -304,8 +304,8 @@ export function HomeView({
       </section>
 
       {/* Hot Lobangs */}
-      <section>
-        <div className="px-4 md:px-6 flex items-center justify-between mb-3">
+      <section className="px-4 md:px-6">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Clock className="size-5 text-destructive" />
             <h2 className="font-semibold text-foreground">Hot Lobangs</h2>
@@ -318,7 +318,7 @@ export function HomeView({
             <ArrowRight className="size-4" />
           </button>
         </div>
-        <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory px-4 md:px-6 pb-2 scrollbar-hide">
+        <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
           {hotLobangs.map((listing) => (
                 <HotLobangCard
                   key={listing.id}
