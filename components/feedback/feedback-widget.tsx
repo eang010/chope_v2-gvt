@@ -256,9 +256,6 @@ export function FeedbackWidget() {
               <>
             <div>
               <p className="mb-1 text-sm font-medium text-foreground">Any feedback? (Optional)</p>
-              <p className="mb-2 text-xs text-muted-foreground">
-                You can submit your rating now, or add more details.
-              </p>
               <div className="grid grid-cols-2 gap-2">
                 {FEEDBACK_TYPES.map((option) => {
                   const Icon = option.icon
