@@ -6,7 +6,7 @@ export function getPinnedHotLobangId(): string | null {
   return id || null
 }
 
-function isUrgentListing(listing: Listing, now = new Date()): boolean {
+export function isUrgentListing(listing: Pick<Listing, 'ends_at'>, now = new Date()): boolean {
   if (!listing.ends_at) return false
   return differenceInHours(new Date(listing.ends_at), now) >= 0
 }

@@ -155,6 +155,16 @@ export function GiveAwayView({ userId, isActive = true, onNavigate, onListingCre
       const result = await createListing(listingData, media)
 
       if (result) {
+        if (result.ends_at) {
+          void fetch('/api/notifications/hot-lobang', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ listingId: result.id }),
+          }).catch((error) => {
+            console.error('Failed to start Hot Lobang emails:', error)
+          })
+        }
         onListingCreated?.()
         setIsSubmitted(true)
         setTimeout(() => {
