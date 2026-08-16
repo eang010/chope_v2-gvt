@@ -162,8 +162,9 @@ export function FeedbackWidget() {
       setOpen(false)
       resetForm()
       toast({
-        title: 'Thanks for the feedback',
-        description: 'We received your note.',
+        title: 'Thanks for your feedback! 🙂',
+        variant: 'success',
+        duration: 4000,
       })
     } catch {
       setError('Could not send feedback. Please try again.')
