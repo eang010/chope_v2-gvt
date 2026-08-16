@@ -8,6 +8,7 @@ export interface User {
   avatar_seed: string
   agency: string | null
   office_floor: string | null
+  email_notifications: boolean
   created_at: string
 }
 
@@ -659,7 +660,7 @@ export async function replaceListingMedia(
 
 export async function updateUserProfile(
   userId: string,
-  updates: Partial<Pick<User, 'office_floor' | 'avatar_seed' | 'agency'>>
+  updates: Partial<Pick<User, 'office_floor' | 'avatar_seed' | 'agency' | 'email_notifications'>>
 ): Promise<User | null> {
   const supabase = createClient()
 

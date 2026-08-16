@@ -303,7 +303,6 @@ export function GiveAwayView({ userId, isActive = true, onNavigate, onListingCre
       <PageHeader
         icon={<Gift className="size-5 text-primary shrink-0 sm:size-6" />}
         title="Got something to share?"
-        description="Snap it, tap a category, and list it — let the office chope it up."
       />
 
       <div className="px-4 md:px-6 space-y-4">
@@ -332,7 +331,7 @@ export function GiveAwayView({ userId, isActive = true, onNavigate, onListingCre
                   <ImagePlus className="size-7 text-primary" />
                 </div>
                 <p className="font-semibold text-foreground">Drop a photo or tap to add</p>
-                <p className="text-sm text-muted-foreground">First one is the cover. Up to 5 photos.</p>
+                <p className="text-sm text-muted-foreground">Up to 5 photos.</p>
                 {fileInput}
               </div>
             </label>

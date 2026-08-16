@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import { QuantityStepper } from '@/components/ui/quantity-stepper'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -36,7 +37,7 @@ import {
 import { cn } from '@/lib/utils'
 import {
   User, Gift, Package, Settings, LogOut, MapPin, Clock, X,
-  ChevronDown, Edit3, Archive, ArchiveRestore, CircleEllipsis, Trash2, MoreHorizontal, Check, Users, Mail, Building2, Layers, ImagePlus
+  ChevronDown, Edit3, Archive, ArchiveRestore, CircleEllipsis, Trash2, MoreHorizontal, Check, Users, Mail, Building2, Layers, ImagePlus, Bell
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import {
@@ -1077,6 +1078,7 @@ function ProfileEditDrawer({
 }) {
   const [selectedSeed, setSelectedSeed] = useState('')
   const [officeFloor, setOfficeFloor] = useState('')
+  const [emailNotifications, setEmailNotifications] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -1084,6 +1086,7 @@ function ProfileEditDrawer({
     if (user) {
       setSelectedSeed(user.avatar_seed || 'cat')
       setOfficeFloor(user.office_floor || '')
+      setEmailNotifications(user.email_notifications !== false)
     }
   }, [user])
 
@@ -1094,6 +1097,7 @@ function ProfileEditDrawer({
       const updated = await updateUserProfile(user.id, {
         avatar_seed: selectedSeed,
         office_floor: officeFloor || null,
+        email_notifications: emailNotifications,
       })
       if (updated) {
         onSave(updated)
@@ -1155,6 +1159,23 @@ function ProfileEditDrawer({
             <Edit3 className="size-4 shrink-0 text-muted-foreground" aria-hidden />
             <span className="sr-only">Editable</span>
           </label>
+
+          <div className="flex items-center gap-3 rounded-xl bg-muted p-3">
+            <div className="size-10 rounded-full bg-[#FBE4E4] flex items-center justify-center">
+              <Bell className="size-5 text-[#D66B6B]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground">Email notifications</p>
+              <p className="text-xs text-muted-foreground">
+                Get an email when there is a new Hot Lobang
+              </p>
+            </div>
+            <Switch
+              checked={emailNotifications}
+              onCheckedChange={setEmailNotifications}
+              aria-label="Email notifications"
+            />
+          </div>
 
           {/* Avatar picker */}
           <div className="space-y-3">

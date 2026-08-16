@@ -87,7 +87,9 @@ export async function notifyUsersOfHotLobang(listingId: string): Promise<void> {
   if (!loaded || !canNotifyHotLobang(loaded.listing)) return
 
   const supabase = createReadClient()
-  const { data: users, error } = await supabase.from('users').select('id, email')
+  const { data: users, error } = await supabase
+    .from('users')
+    .select('id, email, email_notifications')
 
   if (error) {
     console.error('Failed to load users for Hot Lobang email:', error)
@@ -95,6 +97,7 @@ export async function notifyUsersOfHotLobang(listingId: string): Promise<void> {
   }
 
   const recipients = (users ?? [])
+    .filter((user) => user.email_notifications !== false)
     .map((user) => normalizeEmail(user.email))
     .filter(Boolean)
 
