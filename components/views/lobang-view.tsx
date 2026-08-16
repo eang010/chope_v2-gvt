@@ -5,7 +5,7 @@ import { categories, categoryOptions, listingMatchesCategory } from '@/lib/mock-
 import { FeedCard } from '@/components/feed/feed-card'
 import { PageHeader } from '@/components/layout/page-header'
 import { cn } from '@/lib/utils'
-import { Compass, Flame, X } from 'lucide-react'
+import { Compass, Flame, X, ChevronUp } from 'lucide-react'
 import { differenceInHours } from 'date-fns'
 import { getAllListings } from '@/lib/db'
 import type { Listing } from '@/lib/db'
@@ -39,6 +39,7 @@ export function LobangView({
   const categoryStripRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [highlightedListingId, setHighlightedListingId] = useState<string | null>(null)
+  const [showScrollTop, setShowScrollTop] = useState(false)
   const onFocusListingHandledRef = useRef(onFocusListingHandled)
   onFocusListingHandledRef.current = onFocusListingHandled
   const now = new Date()
@@ -90,6 +91,20 @@ export function LobangView({
 
   useEffect(() => {
     if (!isActive) setHighlightedListingId(null)
+  }, [isActive])
+
+  useEffect(() => {
+    if (!isActive) {
+      setShowScrollTop(false)
+      return
+    }
+
+    const update = () => {
+      setShowScrollTop(window.scrollY > 80)
+    }
+    update()
+    window.addEventListener('scroll', update, { passive: true })
+    return () => window.removeEventListener('scroll', update)
   }, [isActive])
 
   useEffect(() => {
@@ -245,6 +260,19 @@ export function LobangView({
           </div>
         )}
       </div>
+
+      {showScrollTop && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-6 z-50 mx-auto flex h-[3.75rem] w-full max-w-lg items-center justify-start px-4 md:max-w-3xl md:px-8 lg:max-w-5xl lg:px-10 xl:max-w-6xl">
+          <button
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="pointer-events-auto flex size-11 items-center justify-center rounded-full border border-border bg-card/95 text-foreground shadow-lg backdrop-blur-md transition-colors hover:bg-muted"
+            aria-label="Back to top"
+          >
+            <ChevronUp className="size-5" />
+          </button>
+        </div>
+      )}
     </div>
   )
 }
