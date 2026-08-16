@@ -305,13 +305,13 @@ export const categories = [
   'Others',
 ]
 
-export const categoryOptions: { id: string; label: string; icon: LucideIcon }[] = [
-  { id: 'Food', label: 'Food', icon: UtensilsCrossed },
-  { id: 'Pantry Snacks', label: 'Pantry Snacks', icon: Cookie },
-  { id: 'Office Essentials', label: 'Office Essentials', icon: Briefcase },
-  { id: 'Open Jio', label: 'Open Jio', icon: Users },
-  { id: 'SOS', label: 'SOS', icon: Siren },
-  { id: 'Others', label: 'Others', icon: Package },
+export const categoryOptions: { id: string; label: string; description: string; icon: LucideIcon }[] = [
+  { id: 'Food', label: 'Food', description: 'Buffet lunch, tea break, etc.', icon: UtensilsCrossed },
+  { id: 'Pantry Snacks', label: 'Pantry Snacks', description: 'Biscuits, drinks, snacks, etc.', icon: Cookie },
+  { id: 'Office Essentials', label: 'Office Essentials', description: 'Keyboard, mouse, monitor stand, etc.', icon: Briefcase },
+  { id: 'Open Jio', label: 'Open Jio', description: 'Group order, karaoke night, etc.', icon: Users },
+  { id: 'SOS', label: 'SOS', description: 'Help needed, lost & found, etc.', icon: Siren },
+  { id: 'Others', label: 'Others', description: 'Anything else', icon: Package },
 ]
 
 export function listingMatchesCategory(listingCategory: string, activeCategory: string) {

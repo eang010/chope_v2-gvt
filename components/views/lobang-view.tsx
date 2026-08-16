@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { categories, listingMatchesCategory } from '@/lib/mock-data'
+import { categories, categoryOptions, listingMatchesCategory } from '@/lib/mock-data'
 import { FeedCard } from '@/components/feed/feed-card'
 import { PageHeader } from '@/components/layout/page-header'
 import { cn } from '@/lib/utils'
@@ -39,6 +39,8 @@ export function LobangView({
   const categoryStripRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [highlightedListingId, setHighlightedListingId] = useState<string | null>(null)
+  const onFocusListingHandledRef = useRef(onFocusListingHandled)
+  onFocusListingHandledRef.current = onFocusListingHandled
   const now = new Date()
   
   useEffect(() => {
@@ -61,28 +63,34 @@ export function LobangView({
 
     const listing = listings.find((l) => l.id === focusListingId)
     if (!listing) {
-      onFocusListingHandled?.()
+      onFocusListingHandledRef.current?.()
       return
     }
 
     setActiveCategory(focusCategory || 'All')
-
-    let highlightTimer: ReturnType<typeof setTimeout> | undefined
 
     const scrollTimer = window.setTimeout(() => {
       document
         .getElementById(`listing-${focusListingId}`)
         ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       setHighlightedListingId(focusListingId)
-      onFocusListingHandled?.()
-      highlightTimer = window.setTimeout(() => setHighlightedListingId(null), 2000)
+      onFocusListingHandledRef.current?.()
     }, 100)
 
     return () => {
       clearTimeout(scrollTimer)
-      if (highlightTimer) clearTimeout(highlightTimer)
     }
-  }, [focusListingId, focusCategory, isLoading, listings, onFocusListingHandled])
+  }, [focusListingId, focusCategory, isLoading, listings])
+
+  useEffect(() => {
+    if (!highlightedListingId) return
+    const timer = window.setTimeout(() => setHighlightedListingId(null), 2000)
+    return () => clearTimeout(timer)
+  }, [highlightedListingId])
+
+  useEffect(() => {
+    if (!isActive) setHighlightedListingId(null)
+  }, [isActive])
 
   useEffect(() => {
     if (focusListingId) return
@@ -152,7 +160,9 @@ export function LobangView({
         }
         title={urgentOnly ? 'Hot Lobangs' : 'Lobang'}
         description={
-          urgentOnly ? "Grab them before they're gone!" : 'Browse freebies near you'
+          urgentOnly || activeCategory === 'All'
+            ? undefined
+            : categoryOptions.find((option) => option.id === activeCategory)?.description
         }
       />
 
