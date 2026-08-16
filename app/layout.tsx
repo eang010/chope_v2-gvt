@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { InstallPrompt } from '@/components/pwa/install-prompt'
 import { SerwistProviderWrapper } from '@/components/pwa/serwist-provider'
+import { Toaster } from '@/components/ui/toaster'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -58,6 +59,7 @@ export default function RootLayout({
         <SerwistProviderWrapper>
           {children}
           <InstallPrompt />
+          <Toaster />
         </SerwistProviderWrapper>
       </body>
     </html>

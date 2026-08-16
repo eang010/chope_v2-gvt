@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react'
 import { FloatingNav } from './floating-nav'
+import { FeedbackWidget } from '@/components/feedback/feedback-widget'
 import { NavItem } from '@/lib/types'
 
 interface AppShellProps {
@@ -16,6 +17,7 @@ export function AppShell({ children, activeNav, onNavigate }: AppShellProps) {
       <main className="mx-auto w-full max-w-lg md:max-w-3xl md:px-2 lg:max-w-5xl lg:px-4 xl:max-w-6xl">
         {children}
       </main>
+      <FeedbackWidget />
       <FloatingNav activeItem={activeNav} onNavigate={onNavigate} />
     </div>
   )
