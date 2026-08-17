@@ -397,7 +397,7 @@ export async function getListingsByUserId(userId: string): Promise<Listing[]> {
     .select(`
       *,
       media:listing_media(id, listing_id, type, url, display_order),
-      chopes(id, user_id, quantity, created_at, users:user_id(id, name, avatar_seed))
+      chopes(id, user_id, quantity, created_at, users:user_id(id, name, email, avatar_seed))
     `)
     .eq('giver_id', userId)
     .order('created_at', { ascending: false })

@@ -334,7 +334,7 @@ interface DBListingWithChopes extends DBListing {
     user_id: string
     quantity: number
     created_at: string
-    users?: { id: string; name: string; avatar_seed: string }
+    users?: { id: string; name: string; email?: string; avatar_seed: string }
   }>
 }
 
@@ -353,6 +353,21 @@ function ListingCard({
 }) {
   const [showActionsMenu, setShowActionsMenu] = useState(false)
   const [showChopers, setShowChopers] = useState(false)
+  const [revealedChoperId, setRevealedChoperId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!revealedChoperId) return
+
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target
+      if (!(target instanceof Element)) return
+      if (target.closest(`[data-choper-row="${revealedChoperId}"]`)) return
+      setRevealedChoperId(null)
+    }
+
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [revealedChoperId])
 
   const chopersCount = listing.chopes?.length || 0
   const hasBeenChoped =
@@ -392,7 +407,10 @@ function ListingCard({
             </span>
             {chopersCount > 0 && (
               <button
-                onClick={() => setShowChopers(!showChopers)}
+                onClick={() => {
+                  setShowChopers((open) => !open)
+                  setRevealedChoperId(null)
+                }}
                 className="flex items-center gap-1 text-xs text-success font-medium hover:underline"
               >
                 <Users className="size-3" />
@@ -418,25 +436,61 @@ function ListingCard({
         <div className="mt-3 pt-3 border-t border-border space-y-2">
           <p className="text-xs text-muted-foreground font-medium">People who choped:</p>
           <div className="space-y-2">
-            {listing.chopes.map((choper) => (
-              <div key={choper.id} className="flex items-center gap-2">
-                <Avatar className="size-6">
-                  <AvatarImage
-                    src={choper.users?.avatar_seed
-                      ? `https://api.dicebear.com/9.x/thumbs/svg?seed=${choper.users.avatar_seed}`
-                      : ''}
-                    alt={choper.users?.name || ''}
-                  />
-                  <AvatarFallback className="text-[10px] bg-secondary">
-                    {choper.users?.name?.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-sm text-foreground flex-1">{choper.users?.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {choper.quantity}x &bull; {formatDistanceToNow(new Date(choper.created_at), { addSuffix: true })}
-                </span>
-              </div>
-            ))}
+            {listing.chopes.map((choper) => {
+              const emailRevealed = revealedChoperId === choper.id
+              const email = choper.users?.email?.trim() || 'No email'
+              return (
+                <div key={choper.id} data-choper-row={choper.id} className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="flex min-w-0 flex-1 items-center text-left"
+                    aria-expanded={emailRevealed}
+                    aria-label={
+                      emailRevealed
+                        ? `Hide email for ${choper.users?.name || 'choper'}`
+                        : `Show email for ${choper.users?.name || 'choper'}`
+                    }
+                    onClick={() =>
+                      setRevealedChoperId((current) => (current === choper.id ? null : choper.id))
+                    }
+                  >
+                    <Avatar className="size-6 shrink-0">
+                      <AvatarImage
+                        src={choper.users?.avatar_seed
+                          ? `https://api.dicebear.com/9.x/thumbs/svg?seed=${choper.users.avatar_seed}`
+                          : ''}
+                        alt={choper.users?.name || ''}
+                      />
+                      <AvatarFallback className="text-[10px] bg-secondary">
+                        {choper.users?.name?.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="relative ml-2 min-w-0 flex-1 overflow-hidden">
+                      <span
+                        className={cn(
+                          'block truncate text-sm text-foreground',
+                          emailRevealed && 'opacity-0'
+                        )}
+                      >
+                        {choper.users?.name}
+                      </span>
+                      <span
+                        className={cn(
+                          'absolute inset-y-0 left-0 right-0 flex items-center truncate bg-card text-xs text-muted-foreground transition-transform duration-300 ease-out',
+                          emailRevealed ? 'translate-x-0' : '-translate-x-full'
+                        )}
+                        title={email}
+                      >
+                        {email}
+                      </span>
+                    </span>
+                  </button>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {choper.quantity}x &bull; {formatDistanceToNow(new Date(choper.created_at), { addSuffix: true })}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
