@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { chopeEmailDocument } from '@/lib/email-template'
 import { isUrgentListing } from '@/lib/hot-lobangs'
 import { normalizeEmail, type Listing } from '@/lib/db'
 import { isPostmanConfigured, sendTransactionalEmail } from '@/lib/postman'
@@ -25,17 +26,9 @@ function createReadClient() {
 }
 
 function hotLobangEmailBody(): string {
-  return `
-<table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-  <tr>
-    <td align="center" style="text-align:center;">
-      <img src="https://go.gov.sg/chopelogo" alt="Chope" width="180" style="display:block;margin:0 auto;max-width:180px;height:auto;" />
-      <p>There's a new Hot Lobang on Chope. Open the Chope app to view the listing.</p>
-      <p>For any issues or enquiries, reach out to <a href="mailto:emily_ang@stb.gov.sg">emily_ang@stb.gov.sg</a>.</p>
-      <p style="color:#6b7280;font-size:12px;">This is an automated email from Chope. Please do not reply to this email.</p>
-    </td>
-  </tr>
-</table>`
+  return chopeEmailDocument(
+    "There's a new Hot Lobang on Chope. Open the Chope app to view the listing."
+  )
 }
 
 export async function loadHotLobangForNotify(listingId: string): Promise<{

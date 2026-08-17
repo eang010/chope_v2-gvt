@@ -124,6 +124,7 @@ function CategoryScroller({
 interface HomeViewProps {
   userId: string
   refreshKey?: number
+  isActive?: boolean
   onNavigate: (nav: 'lobang' | 'give-away' | 'my-stuff', options?: NavigateOptions) => void
   onChopeActivity?: () => void
 }
@@ -192,6 +193,7 @@ function HotLobangCard({
 export function HomeView({
   userId,
   refreshKey = 0,
+  isActive = true,
   onNavigate,
   onChopeActivity,
 }: HomeViewProps) {
@@ -202,6 +204,9 @@ export function HomeView({
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    if (!isActive) return
+    let cancelled = false
+
     async function loadData() {
       try {
         const [userData, listings, given, choped] = await Promise.all([
@@ -210,21 +215,24 @@ export function HomeView({
           getGivenCount(userId),
           getChopedCount(userId),
         ])
+        if (cancelled) return
 
         setUser(userData)
         setGivenCount(given)
         setChopedCount(choped)
-
         setHotLobangs(buildHotLobangsList(listings))
       } catch (error) {
         console.error('Error loading home data:', error)
       } finally {
-        setIsLoading(false)
+        if (!cancelled) setIsLoading(false)
       }
     }
 
     loadData()
-  }, [userId, refreshKey])
+    return () => {
+      cancelled = true
+    }
+  }, [userId, refreshKey, isActive])
 
   const handleChopeSuccess = (listingId: string, newQuantityRemaining: number) => {
     setHotLobangs((prev) =>

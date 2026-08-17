@@ -96,6 +96,15 @@ export function ChopeSheet({ listing, userId, trigger, onChopeSuccess }: ChopeSh
       }
     }
 
+    void fetch('/api/notifications/chope', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ listingId: listing.id }),
+    }).catch((error) => {
+      console.error('Failed to start chope email:', error)
+    })
+
     setIsSubmitted(true)
     setTimeout(() => {
       setIsOpen(false)

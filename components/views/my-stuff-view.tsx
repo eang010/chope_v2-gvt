@@ -1167,7 +1167,7 @@ function ProfileEditDrawer({
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground">Email notifications</p>
               <p className="text-xs text-muted-foreground">
-                Get an email when there is a new Hot Lobang
+                Turn it off if you don't want to receive email notifications.
               </p>
             </div>
             <Switch
@@ -1226,11 +1226,13 @@ function ProfileEditDrawer({
 export function MyStuffView({
   userId,
   refreshKey = 0,
+  isActive = true,
   onListingActivity,
   onLogout,
 }: {
   userId: string
   refreshKey?: number
+  isActive?: boolean
   onListingActivity?: () => void
   onLogout: () => void
 }) {
@@ -1251,6 +1253,9 @@ export function MyStuffView({
   const [isProfileEditOpen, setIsProfileEditOpen] = useState(false)
 
   useEffect(() => {
+    if (!isActive) return
+    let cancelled = false
+
     async function loadData() {
       try {
         const [userData, chopesData, given, allListings] = await Promise.all([
@@ -1259,6 +1264,7 @@ export function MyStuffView({
           getGivenCount(userId),
           getListingsByUserId(userId),
         ])
+        if (cancelled) return
 
         setUser(userData)
         setChopes(chopesData)
@@ -1274,7 +1280,10 @@ export function MyStuffView({
       }
     }
     loadData()
-  }, [userId, refreshKey])
+    return () => {
+      cancelled = true
+    }
+  }, [userId, refreshKey, isActive])
 
   const handleEdit = (listing: DBListingWithChopes) => {
     setEditingListing(listing)

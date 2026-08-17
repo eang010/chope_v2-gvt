@@ -235,6 +235,7 @@ export default function Home() {
             <HomeView
               userId={userId}
               refreshKey={listingsRefreshKey}
+              isActive={activeNav === 'home'}
               onNavigate={(nav, options) => handleNavigate(nav as NavItem, options)}
               onChopeActivity={() => setListingsRefreshKey((k) => k + 1)}
             />
@@ -264,6 +265,7 @@ export default function Home() {
             <MyStuffView
               userId={userId}
               refreshKey={listingsRefreshKey}
+              isActive={activeNav === 'my-stuff'}
               onListingActivity={() => setListingsRefreshKey((k) => k + 1)}
               onLogout={handleLogout}
             />

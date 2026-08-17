@@ -45,19 +45,26 @@ export function LobangView({
   const now = new Date()
   
   useEffect(() => {
+    if (!isActive) return
+    let cancelled = false
+
     async function loadListings() {
       try {
         const data = await getAllListings()
+        if (cancelled) return
         setListings(data)
       } catch (error) {
         console.error('Error loading listings:', error)
       } finally {
-        setIsLoading(false)
+        if (!cancelled) setIsLoading(false)
       }
     }
 
     loadListings()
-  }, [refreshKey])
+    return () => {
+      cancelled = true
+    }
+  }, [refreshKey, isActive])
 
   useEffect(() => {
     if (!focusListingId || isLoading) return
