@@ -105,10 +105,10 @@ export function ChopeSheet({ listing, userId, trigger, onChopeSuccess }: ChopeSh
       console.error('Failed to start chope email:', error)
     })
 
+    onChopeSuccess?.(listing.id, newQty)
     setIsSubmitted(true)
     setTimeout(() => {
       setIsOpen(false)
-      onChopeSuccess?.(listing.id, newQty)
       setTimeout(() => {
         setIsSubmitted(false)
         setIsSubmitting(false)

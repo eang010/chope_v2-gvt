@@ -65,7 +65,7 @@ const avatarSeeds = [
 const CHOPES_PREVIEW_LIMIT = 3
 
 function isActiveChope(chope: DBChope): boolean {
-  return Boolean(chope.listing && !chope.listing.is_archived)
+  return chope.listing?.is_archived !== true
 }
 
 // ----- ChopeCard -----
@@ -1277,7 +1277,7 @@ export function MyStuffView({
   const [isProfileEditOpen, setIsProfileEditOpen] = useState(false)
 
   useEffect(() => {
-    if (!isActive) return
+    if (!isActive && refreshKey === 0) return
     let cancelled = false
 
     async function loadData() {

@@ -45,7 +45,7 @@ export function LobangView({
   const now = new Date()
   
   useEffect(() => {
-    if (!isActive) return
+    if (!isActive && refreshKey === 0) return
     let cancelled = false
 
     async function loadListings() {

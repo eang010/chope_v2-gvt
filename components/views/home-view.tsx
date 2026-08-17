@@ -204,7 +204,7 @@ export function HomeView({
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    if (!isActive) return
+    if (!isActive && refreshKey === 0) return
     let cancelled = false
 
     async function loadData() {
@@ -240,6 +240,7 @@ export function HomeView({
         l.id === listingId ? { ...l, quantity_remaining: newQuantityRemaining } : l
       )
     )
+    setChopedCount((count) => count + 1)
     onChopeActivity?.()
   }
 

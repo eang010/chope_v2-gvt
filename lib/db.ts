@@ -312,14 +312,26 @@ export async function getChopesByUserId(userId: string): Promise<Chope[]> {
     `)
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
-    .order('display_order', { referencedTable: 'listing_media', ascending: true })
 
   if (error) {
     console.error('Error fetching chopes:', error)
     return []
   }
 
-  return data || []
+  return (data || []).map((chope) => {
+    const listing = chope.listing as Listing | Listing[] | null | undefined
+    const resolved = Array.isArray(listing) ? listing[0] : listing
+    if (!resolved) return { ...chope, listing: undefined }
+    return {
+      ...chope,
+      listing: {
+        ...resolved,
+        media: [...(resolved.media || [])].sort(
+          (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
+        ),
+      },
+    }
+  })
 }
 
 export async function getChopesByUserAndListing(
