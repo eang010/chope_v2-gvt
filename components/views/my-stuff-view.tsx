@@ -1160,14 +1160,38 @@ function ProfileEditDrawer({
             <span className="sr-only">Editable</span>
           </label>
 
-          <div className="flex items-center gap-3 rounded-xl bg-muted p-3">
-            <div className="size-10 rounded-full bg-[#FBE4E4] flex items-center justify-center">
-              <Bell className="size-5 text-[#D66B6B]" />
+          <div
+            className={cn(
+              'flex items-center gap-3 rounded-xl bg-muted p-3 transition-opacity',
+              !emailNotifications && 'opacity-55'
+            )}
+          >
+            <div
+              className={cn(
+                'size-10 rounded-full flex items-center justify-center',
+                emailNotifications ? 'bg-[#FBE4E4]' : 'bg-muted-foreground/15'
+              )}
+            >
+              <Bell
+                className={cn(
+                  'size-5',
+                  emailNotifications ? 'text-[#D66B6B]' : 'text-muted-foreground'
+                )}
+              />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground">Email notifications</p>
+              <p
+                className={cn(
+                  'text-sm font-medium',
+                  emailNotifications ? 'text-foreground' : 'text-muted-foreground'
+                )}
+              >
+                Email notifications
+              </p>
               <p className="text-xs text-muted-foreground">
-                Turn it off if you don't want to receive email notifications.
+                {emailNotifications
+                  ? 'Email will be sent to your techpass registered email.'
+                  : 'You will no longer receive any email notification.'}
               </p>
             </div>
             <Switch
