@@ -272,7 +272,7 @@ export function HomeView({
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{givenCount}</p>
-                <p className="text-xs text-muted-foreground">Items Given</p>
+                <p className="text-xs text-muted-foreground">Items Listed</p>
               </div>
             </div>
           </button>
