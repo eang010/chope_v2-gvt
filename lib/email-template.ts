@@ -18,7 +18,13 @@ export function chopeEmailDocument(bodyParagraph: string): string {
       <img src="${LOGO_URL}" alt="Chope" width="180" style="display:block;margin:0 auto;max-width:180px;height:auto;" />
       <p>${bodyParagraph}</p>
       <p>For any issues or enquiries, reach out to <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>.</p>
-      <p style="color:#6b7280;font-size:12px;">This is an automated email from Chope. Please do not reply to this email.</p>
+      <p style="margin: 0 0 12px 0; color: #868e96; font-size: 11px; line-height: 1.6; border-top: 1px solid #e9ecef; padding-top: 16px;">
+      <strong>Want to manage alerts?</strong><br>
+      Open Chope app &gt; Avatar icon in the navigation bar &gt; Settings icon &gt; Email Notifications.
+      </p>
+      <p style="margin: 0; color: #adb5bd; font-size: 11px;">
+      This is an automated message from Chope. Please do not reply to this email.
+      </p>
     </td>
   </tr>
 </table>`
